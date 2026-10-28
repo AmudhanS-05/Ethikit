@@ -40,9 +40,11 @@ def test_contract(ev, fitted_ctx):
 def test_deterministic_for_fixed_seed(ev, fitted_ctx):
     if not _applicable(ev, fitted_ctx):
         pytest.skip("not applicable")
-    a = {r.metric: r.value for r in ev.evaluate(fitted_ctx)}
-    b = {r.metric: r.value for r in ev.evaluate(fitted_ctx)}
+    ra, rb = ev.evaluate(fitted_ctx), ev.evaluate(fitted_ctx)
+    a, b = {r.metric: r.value for r in ra}, {r.metric: r.value for r in rb}
     assert a == pytest.approx(b, rel=1e-9, abs=1e-9)
+    # the worked numbers and charts shown to the user must repeat too, not just the metrics
+    assert [(r.details or {}).get("trace") for r in ra] == [(r.details or {}).get("trace") for r in rb]
 
 
 def test_every_tool_addressable_principle_has_a_tool():
@@ -81,3 +83,26 @@ def test_regression_dataset_runs_applicable_tools(tiny_reg_ds):
     df = run_benchmark(tiny_reg_ds, REGRESSORS["linear"])
     assert not (df["target"] == "error").any()
     assert {"r2", "group_mae_gap"} <= set(df["metric"])
+
+
+SLOW_TOOLS = {"giskard", "art_robustness", "drift_detection"}
+FAST_TOOLS = [e for e in AVAILABLE if e.name not in SLOW_TOOLS]
+
+
+def _zoo_names():
+    from ethikit.benchmark.models import flat_classifiers
+    return sorted(flat_classifiers())
+
+
+@pytest.mark.parametrize("name", _zoo_names())
+def test_every_fast_tool_runs_on_every_zoo_model(name, tiny_ds):
+    """The runner swallows a crashing tool and shows it as a red line, so a tool that breaks on one
+    particular model family (naive_bayes once tripped the privacy tool because scikit-learn's
+    GaussianNB has its own `epsilon_`) would pass every other test. Run each tool on each model."""
+    from ethikit.benchmark.models import flat_classifiers
+    from ethikit.benchmark.runner import _predict_all
+    model = flat_classifiers()[name]().fit(tiny_ds.X_train, tiny_ds.y_train)
+    ctx = _predict_all(model, tiny_ds)
+    for ev in FAST_TOOLS:
+        if ev.applies_to(ctx):
+            assert ev.evaluate(ctx), f"{ev.name} returned nothing for {name}"

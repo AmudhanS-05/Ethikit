@@ -160,7 +160,11 @@ class MembershipInferenceEvaluator(Evaluator):
                      "series": [{"name": "members", "values": [int(v) for v in h_mem]},
                                 {"name": "non-members", "values": [int(v) for v in h_non]}]}],
         )
+        # `epsilon_` alone is not proof of DP: scikit-learn's GaussianNB has an unrelated `epsilon_`
+        # (variance smoothing). Only our DP-SGD models also record `delta_`.
         eps = getattr(ctx.model, "epsilon_", None)
+        if getattr(ctx.model, "delta_", None) is None:
+            eps = None
         if eps is not None:
             # the model was trained with differential privacy: say what was promised next to what
             # the attack actually achieved

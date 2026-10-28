@@ -117,7 +117,9 @@ class ExplainabilityEvaluator(Evaluator):
         # SVC(probability=True)). Approximate attributions are fine for a top-5 ranking.
         n_features = background.shape[1]
         max_evals = max(2 * n_features + 1, 15)
-        explainer = shap.Explainer(predict_fn, background, algorithm="permutation")
+        # seed=0: shap's permutation sampler otherwise draws unseeded permutations, so the numbers
+        # (and the chart in the trace) changed between identical runs
+        explainer = shap.Explainer(predict_fn, background, algorithm="permutation", seed=0)
         sv = explainer(sample, max_evals=max_evals, silent=True)
 
         values = np.asarray(sv.values)
