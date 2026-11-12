@@ -41,9 +41,9 @@ def test_full_run_writes_report_cards_and_results(tmp_path, capsys):
     rc = cli.main(["run", "--models", "decision_tree", "--tools", "performance,fairness",
                    "--out", str(out)])
     assert rc == 0
-    assert (out / "report.html").read_text().startswith("<!doctype html>")
+    assert (out / "report.html").read_text(encoding="utf-8").startswith("<!doctype html>")
     assert (out / "model_cards" / "decision_tree.html").exists()
-    res = json.loads((out / "results.json").read_text())
+    res = json.loads((out / "results.json").read_text(encoding="utf-8"))
     assert res["pareto"] == ["decision_tree"] and "traces" in res
     assert "pareto front" in capsys.readouterr().out
 
@@ -51,12 +51,12 @@ def test_full_run_writes_report_cards_and_results(tmp_path, capsys):
 def test_checklist_template_and_attach(tmp_path):
     f = tmp_path / "a.json"
     assert cli.main(["checklist", "deon", "--out", str(f)]) == 0
-    data = json.loads(f.read_text()); data["answers"]["A.1"]["answer"] = "yes"
+    data = json.loads(f.read_text(encoding="utf-8")); data["answers"]["A.1"]["answer"] = "yes"
     f.write_text(json.dumps(data))
     out = tmp_path / "o"
     assert cli.main(["run", "--models", "decision_tree", "--tools", "performance",
                      "--checklist", str(f), "--out", str(out)]) == 0
-    card = (out / "model_cards" / "decision_tree.html").read_text()
+    card = (out / "model_cards" / "decision_tree.html").read_text(encoding="utf-8")
     assert "Deon data-science ethics checklist" in card and "A.1" in card
 
 
@@ -67,3 +67,18 @@ def test_cli_whatif_and_explain(capsys):
     assert "counterfactual" in out and "parity gap" in out and "knn" in out and "skipped" in out
     assert cli.main(["explain", "--models", "decision_tree", "--row", "2"]) == 0
     assert "occlusion" in capsys.readouterr().out
+
+
+def test_redirected_output_survives_non_ascii_marks(tmp_path):
+    # With stdout redirected, Windows uses the ANSI code page (cp1252), which has
+    # no ✓; the CLI must write UTF-8 instead of stopping with UnicodeEncodeError.
+    import os
+    import subprocess
+    import sys
+    env = {k: v for k, v in os.environ.items() if k not in ("PYTHONUTF8", "PYTHONIOENCODING")}
+    r = subprocess.run([sys.executable, "-m", "ethikit", "run", "--models", "decision_tree",
+                        "--tools", "performance", "--out", str(tmp_path / "o")],
+                       capture_output=True, env=env, cwd=os.path.dirname(os.path.dirname(cli.__file__)))
+    out = r.stdout.decode("utf-8")
+    assert r.returncode == 0, r.stderr.decode("utf-8", "replace")
+    assert "✓ performance" in out

@@ -818,9 +818,30 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _utf8_streams() -> None:
+    """On Windows, write stdout/stderr as UTF-8 whatever the code page.
+
+    Redirected output (``ethikit run > log.txt``, a pipe, a CI log) otherwise
+    uses the ANSI code page (cp1252), which cannot encode the ✓ / ✗ / → the
+    run log prints, so the run would stop with a UnicodeEncodeError. An
+    interactive console is unaffected (it already takes Unicode), and so is
+    Linux/macOS.
+    """
+    if sys.platform != "win32":
+        return
+    for stream in (sys.stdout, sys.stderr):
+        enc = (getattr(stream, "encoding", None) or "").replace("-", "").lower()
+        if enc != "utf8" and hasattr(stream, "reconfigure"):
+            try:
+                stream.reconfigure(encoding="utf-8")
+            except (ValueError, OSError):    # a detached / exotic stream: leave it as it is
+                pass
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     import logging
     import warnings
+    _utf8_streams()
     warnings.filterwarnings("ignore")
     logging.getLogger().setLevel(logging.ERROR)
     a = build_parser().parse_args(argv)

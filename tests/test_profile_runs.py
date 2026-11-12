@@ -122,7 +122,7 @@ def test_cli_require_profile_stability_and_history(tmp_path, capsys):
     out = capsys.readouterr().out
     for needle in ["data profile", "proxy screen", "requirements:", "feasible:", "how stable is the order?", "saved as run"]:
         assert needle in out, needle
-    card = (tmp_path / "o" / "model_cards" / "naive_bayes.html").read_text()
+    card = (tmp_path / "o" / "model_cards" / "naive_bayes.html").read_text(encoding="utf-8")
     assert "Requirements you set" in card and "does not</b> meet" in card and "What the data says" in card
 
 
@@ -130,10 +130,10 @@ def test_cli_config_roundtrip_and_export(tmp_path, capsys):
     cfgfile = tmp_path / "c.json"
     assert cli.main(["run", "--models", "decision_tree", "--tools", "performance", "--seed", "3",
                      "--export-config", str(cfgfile)]) == 0
-    cfg = json.loads(cfgfile.read_text())
+    cfg = json.loads(cfgfile.read_text(encoding="utf-8"))
     assert cfg["split"]["seed"] == 3 and list_runs() == []        # export does not run
     assert cli.main(["run", "--config", str(cfgfile), "--out", str(tmp_path / "o")]) == 0
-    res = json.loads((tmp_path / "o" / "results.json").read_text())
+    res = json.loads((tmp_path / "o" / "results.json").read_text(encoding="utf-8"))
     assert res["config"]["split"]["seed"] == 3
     assert cli.main(["run", "--config", str(tmp_path / "o" / "results.json"), "--out", str(tmp_path / "o2")]) == 0
     runs = list_runs()
