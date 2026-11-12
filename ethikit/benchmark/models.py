@@ -1,15 +1,22 @@
 """Readily-available model factories, grouped by family.
 
-These are all stock scikit-learn estimators so the demo needs no extra
-installs. `pip install xgboost lightgbm` in Claude Code lets you drop
-gradient-boosted trees into the tree_based family the same way.
+The core zoo is stock scikit-learn, so it needs no extra installs. Optional
+libraries join their family when importable: XGBoost and LightGBM in tree_based
+(`pip install xgboost lightgbm`), the PyTorch MLP and its differentially-private
+twin in deep (`pip install torch opacus`). Anything else is one
+`estimator_from_path("pkg.Class")` away, so the zoo is a default, not a limit.
 """
 from __future__ import annotations
 
+import importlib.util
 from typing import Callable, Dict, Optional
 
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import (
+    AdaBoostClassifier, AdaBoostRegressor,
+    ExtraTreesClassifier, ExtraTreesRegressor,
     GradientBoostingClassifier, GradientBoostingRegressor,
+    HistGradientBoostingClassifier, HistGradientBoostingRegressor,
     RandomForestClassifier, RandomForestRegressor,
 )
 from sklearn.linear_model import LogisticRegression, Ridge
@@ -23,11 +30,15 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 CLASSIFIERS: Dict[str, Dict[str, Callable]] = {
     "linear": {
         "logistic_regression": lambda: LogisticRegression(max_iter=1000),
+        "lda": lambda: LinearDiscriminantAnalysis(),
     },
     "tree_based": {
         "decision_tree": lambda: DecisionTreeClassifier(max_depth=6, random_state=0),
         "random_forest": lambda: RandomForestClassifier(n_estimators=200, random_state=0),
+        "extra_trees": lambda: ExtraTreesClassifier(n_estimators=200, min_samples_leaf=2, random_state=0),
         "gradient_boosting": lambda: GradientBoostingClassifier(random_state=0),
+        "hist_gradient_boosting": lambda: HistGradientBoostingClassifier(random_state=0),
+        "adaboost": lambda: AdaBoostClassifier(random_state=0),
     },
     "instance_based": {
         "knn": lambda: KNeighborsClassifier(),
@@ -55,7 +66,10 @@ REGRESSORS: Dict[str, Dict[str, Callable]] = {
     "tree_based": {
         "decision_tree_reg": lambda: DecisionTreeRegressor(max_depth=6, random_state=0),
         "random_forest_reg": lambda: RandomForestRegressor(n_estimators=200, random_state=0),
+        "extra_trees_reg": lambda: ExtraTreesRegressor(n_estimators=200, min_samples_leaf=2, random_state=0),
         "gradient_boosting_reg": lambda: GradientBoostingRegressor(random_state=0),
+        "hist_gradient_boosting_reg": lambda: HistGradientBoostingRegressor(random_state=0),
+        "adaboost_reg": lambda: AdaBoostRegressor(random_state=0),
     },
     "instance_based": {
         "knn_reg": lambda: KNeighborsRegressor(),
@@ -76,10 +90,45 @@ def _register_torch_models() -> None:
             CLASSIFIERS["deep"]["torch_mlp_dp"] = lambda: TorchMLPClassifier(dp=True)
 
 
+def _register_boosters() -> None:
+    """XGBoost / LightGBM join 'tree_based' only if installed (find_spec: no import cost here)."""
+    if importlib.util.find_spec("xgboost"):
+        def xgb_clf():
+            from xgboost import XGBClassifier
+            return XGBClassifier(n_estimators=200, max_depth=4, learning_rate=0.1, random_state=0,
+                                 n_jobs=1, verbosity=0)
+
+        def xgb_reg():
+            from xgboost import XGBRegressor
+            return XGBRegressor(n_estimators=200, max_depth=4, learning_rate=0.1, random_state=0,
+                                n_jobs=1, verbosity=0)
+        CLASSIFIERS["tree_based"]["xgboost"] = xgb_clf
+        REGRESSORS["tree_based"]["xgboost_reg"] = xgb_reg
+    if importlib.util.find_spec("lightgbm"):
+        def lgbm_clf():
+            from lightgbm import LGBMClassifier
+            return LGBMClassifier(n_estimators=200, random_state=0, n_jobs=1, verbose=-1)
+
+        def lgbm_reg():
+            from lightgbm import LGBMRegressor
+            return LGBMRegressor(n_estimators=200, random_state=0, n_jobs=1, verbose=-1)
+        CLASSIFIERS["tree_based"]["lightgbm"] = lgbm_clf
+        REGRESSORS["tree_based"]["lightgbm_reg"] = lgbm_reg
+
+
 _register_torch_models()
+_register_boosters()
 
 #: what to install to unlock models that aren't registered on this machine
-OPTIONAL_MODELS = {"torch_mlp": "pip install torch", "torch_mlp_dp": "pip install torch opacus"}
+OPTIONAL_MODELS = {"torch_mlp": "pip install torch", "torch_mlp_dp": "pip install torch opacus",
+                   "xgboost": "pip install xgboost", "lightgbm": "pip install lightgbm"}
+#: which family an optional model joins once installed (for UIs that list it greyed out)
+OPTIONAL_FAMILY = {"torch_mlp": "deep", "torch_mlp_dp": "deep", "xgboost": "tree_based",
+                   "lightgbm": "tree_based"}
+
+#: what a UI pre-selects: one fast, readable model per broad kind, so a first run takes well under
+#: a minute (the full zoo, SVC especially, can take many minutes on a large dataset)
+DEFAULT_SELECTION = ["logistic_regression", "decision_tree", "random_forest"]
 
 
 def flat_classifiers() -> Dict[str, Callable]:

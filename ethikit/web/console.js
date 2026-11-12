@@ -290,7 +290,11 @@
     var box = $("#models"); box.innerHTML = "";
     var z = zoo(); var known = allZooModels();
     S.models.forEach(function (m) { if (!known[m]) S.models.delete(m); });
-    if (!S.models.size) Object.keys(z).slice(0, 2).forEach(function (f) { Object.keys(z[f]).forEach(function (m) { S.models.add(m); }); });
+    if (!S.models.size) {
+      (S.meta.default_models || []).forEach(function (m) { if (known[m]) S.models.add(m); });
+      if (!S.models.size) Object.keys(z).slice(0, 2).forEach(function (f) { Object.keys(z[f]).slice(0, 2).forEach(function (m) { S.models.add(m); }); });
+    }
+    var optFam = S.meta.optional_family || {};
     Object.keys(z).forEach(function (fam) {
       var row = el("div", { class: "fam" }, "<span class='famname'>" + esc(fam) + "</span>");
       Object.keys(z[fam]).forEach(function (m) {
@@ -298,9 +302,10 @@
           on ? S.models.add(m) : S.models.delete(m); renderAdvanced(); update();
         }));
       });
-      if (fam === "deep" && !isRegression()) {
+      if (!isRegression()) {
         var opt = S.meta.optional_models || {};
         Object.keys(opt).forEach(function (m) {
+          if ((optFam[m] || "deep") !== fam) return;
           var c = chip(m, false, true, function () {}, "not installed — " + opt[m]);
           c.title = "To enable: " + opt[m]; row.appendChild(c);
         });

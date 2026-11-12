@@ -173,6 +173,22 @@ Every page also prints cleanly (light, no buttons, all sections open), so "Save 
 The four governance checklists record their edition and whether they are verbatim or a
 paraphrase; Deon is the verbatim upstream text (MIT, see THIRD_PARTY_NOTICES.md).
 
+## The model zoo
+
+| family | models |
+|---|---|
+| linear | `logistic_regression`, `lda` |
+| tree_based | `decision_tree`, `random_forest`, `extra_trees`, `gradient_boosting`, `hist_gradient_boosting`, `adaboost`, `xgboost`*, `lightgbm`* |
+| instance_based | `knn` |
+| probabilistic | `naive_bayes` |
+| kernel | `svc` (slow on large data) |
+| deep | `mlp`, `torch_mlp`*, `torch_mlp_dp`* |
+
+\* appears once its library is installed: `pip install xgboost lightgbm`, and see below for torch.
+The console pre-selects `logistic_regression`, `decision_tree` and `random_forest` so a first
+run stays under a minute. The zoo is a default, not a limit: `--estimator NAME=pkg.Class` runs
+any importable estimator, and `--model-file NAME=PATH` evaluates one you already trained.
+
 ## Deep learning on tabular data (optional)
 
 "Tabular" = spreadsheet-shaped data: one row per case, one column per feature. The **deep**

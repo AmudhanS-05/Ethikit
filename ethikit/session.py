@@ -33,6 +33,7 @@ import pandas as pd
 
 from . import checklists as checklists_mod
 from . import principles as principles_mod
+from .benchmark import models as _models_mod
 from .benchmark.models import (
     CLASSIFIERS, REGRESSORS, default_params, estimator_from_path, family_of,
     flat_classifiers, flat_regressors, load_fitted_model, with_params,
@@ -341,8 +342,10 @@ def catalogue() -> Dict[str, Any]:
                 for fam, models in reg.items()}
     return {
         "datasets": DATASETS, "synthetic_knobs": SYNTHETIC_KNOBS,
-        "optional_models": {m: hint for m, hint in __import__("ethikit.benchmark.models", fromlist=["x"]).OPTIONAL_MODELS.items()
-                            if m not in CLASSIFIERS.get("deep", {})},
+        "optional_models": {m: hint for m, hint in _models_mod.OPTIONAL_MODELS.items()
+                            if m not in flat_classifiers()},
+        "optional_family": _models_mod.OPTIONAL_FAMILY,
+        "default_models": _models_mod.DEFAULT_SELECTION,
         "classifiers": zoo(CLASSIFIERS), "regressors": zoo(REGRESSORS),
         "tools": tools, "default_weights": DEFAULT_WEIGHTS,
         "principles": [{"id": p.id, "name": p.name, "plain": p.plain,
