@@ -24,22 +24,22 @@ def summary():
 def test_the_bundle_contains_every_promised_file(summary, tmp_path):
     root = tmp_path / "b"
     write_bundle(str(root), CFG, summary, datasheet_answers={"uses.not_for": "lending"})
-    files = {str(p.relative_to(root)) for p in root.rglob("*") if p.is_file()}
+    files = {p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()}
     for f in ["README.md", "MANIFEST.sha256", "config.json", "results.json", "metrics.csv", "traces.json",
               "report.html", "datasheet.md", "datasheet.html", "datasheet.json", "datasheet_answers.json",
               "environment.json", "checklist/deon_answers.json", "checklist/deon.md",
               "model_cards/logistic_regression.html", "model_cards/random_forest.mct.json"]:
         assert f in files, f
-    readme = (root / "README.md").read_text()
+    readme = (root / "README.md").read_text(encoding="utf-8")
     for f in files - {"README.md"}:
         assert f"`{f}`" in readme, f"README does not list {f}"
     assert "ethikit bundle verify" in readme and "accuracy >= 0.7" in readme
-    assert "lending" in (root / "datasheet.md").read_text()
-    assert "consent forms" in (root / "model_cards" / "random_forest.html").read_text()
-    assert ">4<" in (root / "model_cards" / "random_forest.html").read_text().replace("</td><td>", ">")
+    assert "lending" in (root / "datasheet.md").read_text(encoding="utf-8")
+    assert "consent forms" in (root / "model_cards" / "random_forest.html").read_text(encoding="utf-8")
+    assert ">4<" in (root / "model_cards" / "random_forest.html").read_text(encoding="utf-8").replace("</td><td>", ">")
     rows = list(csv.DictReader(open(root / "metrics.csv")))
     assert len(rows) == len([r for r in summary["records"] if r["target"] != "error"])
-    env = json.loads((root / "environment.json").read_text())
+    env = json.loads((root / "environment.json").read_text(encoding="utf-8"))
     assert env["packages"]["scikit-learn"] and "performance" in env["tools"]
 
 
@@ -53,7 +53,7 @@ def test_rerunning_the_config_reproduces_every_number(summary, tmp_path):
 def test_an_edited_number_is_caught_twice(summary, tmp_path):
     root = tmp_path / "b"
     write_bundle(str(root), CFG, summary)
-    rows = (root / "metrics.csv").read_text().splitlines()
+    rows = (root / "metrics.csv").read_text(encoding="utf-8").splitlines()
     head, first = rows[0], rows[1].split(",")
     first[5] = "0.123456"
     (root / "metrics.csv").write_text("\n".join([head, ",".join(first)] + rows[2:]) + "\n")
