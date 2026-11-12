@@ -72,7 +72,8 @@ def test_upload_csv_then_run_on_it(server):
         f"{r.integers(18, 70)},{r.choice(['a', 'b'])},{r.choice(['F', 'M'])},{r.choice(['yes', 'no'])}" for _ in range(n)]
     with post(server + "/api/upload?name=loans.csv", "\n".join(rows).encode(), "text/csv") as resp:
         info = json.loads(resp.read())
-    assert info["n_rows"] == n and info["suggest"] == {"target": "approved", "sensitive": "sex"}
+    assert info["n_rows"] == n and info["suggest"] == {"target": "approved", "sensitive": "sex",
+                                                    "train_rows": None}
     ev = run_stream(server, {"data": {"source": "upload", "upload_id": info["upload_id"], "name": "loans",
                                       "target": "approved", "sensitive": "sex"},
                              "models": [{"name": "logistic_regression"}], "tools": ["performance", "fairness"]})

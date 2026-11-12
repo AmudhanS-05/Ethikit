@@ -240,11 +240,20 @@ ethikit run --synthetic n=2000 minority_share=0.15 bias=1.5          # tunable s
 ethikit run --model-param random_forest.max_depth=5                  # any hyperparameter
 ethikit run --estimator xt=sklearn.ensemble.ExtraTreesClassifier     # any estimator class
 ethikit run --model-file mine=model.joblib --no-scale ...            # your own trained model, as-is
+ethikit run --data loans.csv --train-rows is_train --model-file mine=model.joblib ...
+                                    # ...and which CSV rows it was trained on (train/holdout):
+                                    # scores use holdout rows; privacy attacks use real members
 ethikit run --model-file net=model.pt ...                            # a PyTorch nn.Module (or .keras/.h5)
 ethikit run --tool-param robustness.sigma=0.25                       # any tool parameter
 ethikit run --cv 5x3                                                 # repeated k-fold: every score gets a spread
 ethikit list params random_forest | ethikit list tools | ethikit checklist altai
 ```
+
+ethikit does not refit a `--model-file`, so it cannot know which of your rows the model was trained on.
+Without `--train-rows`, the membership- and attribute-inference attacks are **skipped** for it, with
+the reason. Run on guessed members, they would report a falsely reassuring ~0. The model card also
+warns that performance and fairness may be inflated if the scored rows overlap the training data.
+The console has the same control under your CSV.
 
 Everything follows your system light/dark setting, with a ☀/☾ toggle to override it.
 

@@ -74,6 +74,12 @@
             <span class="kv"><span>--sensitive-threshold</span><input type="number" id="sensitive-threshold" placeholder="median" step="any"></span>
           </div>
         </div>
+        <div class="line mine-only" id="row-trainrows" hidden><span class="flag">--train-rows</span>
+          <div class="val">
+            <select id="train-rows" aria-label="column marking the rows the model was trained on" aria-describedby="train-rows-help"></select>
+            <span id="train-rows-help" class="dim small">which rows was your model trained on? A column with train/holdout (or 1/0, true/false). Scores then use the holdout rows only, and the privacy attacks use the train rows as members. Without it, a pre-trained model's privacy attacks are skipped.</span>
+          </div>
+        </div>
         <div class="line mine-only" id="row-synth" hidden><span class="flag">--synthetic</span>
           <div class="val" id="synth-knobs"></div>
         </div>

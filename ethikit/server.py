@@ -35,6 +35,7 @@ from . import checklists as checklists_mod
 from . import session
 from .benchmark.models import load_fitted_model
 from .benchmark.runner import jsonable
+from .data import loaders
 from .report import model_card_html, model_card_json, report_html
 
 WEB = Path(__file__).resolve().parent / "web"
@@ -77,8 +78,18 @@ def describe_frame(df: pd.DataFrame) -> dict:
                    if k in lowered), str(df.columns[-1]))
     sensitive = next((lowered[k] for k in ("sex", "gender", "race", "age", "group", "ethnicity")
                       if k in lowered), None)
+    # a column that already says which rows a model was trained on (only if every value parses)
+    train_rows = None
+    for k in ("is_train", "train", "split", "train_test", "subset", "fold_role"):
+        if k in lowered and lowered[k] not in (target, sensitive):
+            try:
+                loaders.parse_train_rows(df[lowered[k]].to_numpy(), lowered[k])
+                train_rows = lowered[k]
+                break
+            except ValueError:
+                pass
     return {"n_rows": int(len(df)), "columns": cols,
-            "suggest": {"target": target, "sensitive": sensitive}}
+            "suggest": {"target": target, "sensitive": sensitive, "train_rows": train_rows}}
 
 
 class Handler(BaseHTTPRequestHandler):

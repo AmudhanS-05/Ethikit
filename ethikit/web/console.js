@@ -97,7 +97,7 @@
 
     $("#csv-file").addEventListener("change", uploadCsv);
     $("#model-file").addEventListener("change", uploadModel);
-    ["#target", "#sensitive", "#exclude-sensitive", "#positive-label", "#sensitive-threshold",
+    ["#target", "#sensitive", "#train-rows", "#exclude-sensitive", "#positive-label", "#sensitive-threshold",
      "#seed", "#test-size", "#no-scale", "#cv", "#max-datasets", "#max-rows", "#states"].forEach(function (s) {
       $(s).addEventListener("input", update);
       $(s).addEventListener("change", update);
@@ -204,7 +204,8 @@
     if (c.data.source === "upload") {
       c.data = { source: "csv", path: (S.upload ? S.upload.name : "your_data") + ".csv", target: c.data.target,
                  sensitive: c.data.sensitive, exclude_sensitive: c.data.exclude_sensitive,
-                 positive_label: c.data.positive_label, sensitive_threshold: c.data.sensitive_threshold };
+                 positive_label: c.data.positive_label, sensitive_threshold: c.data.sensitive_threshold,
+                 train_rows: c.data.train_rows };
     }
     c.models = c.models.filter(function (m) { return !m.upload_model_id; });
     return c;
@@ -225,6 +226,7 @@
     $("#data-desc").textContent = S.meta.datasets[S.source] || "";
     $("#row-upload").hidden = S.source !== "csv";
     $("#row-columns").hidden = !(S.source === "csv" && S.upload);
+    $("#row-trainrows").hidden = !(S.source === "csv" && S.upload);
     $("#row-synth").hidden = S.source !== "synthetic_custom";
     var knobs = $("#synth-knobs"); knobs.innerHTML = "";
     Object.keys(S.meta.synthetic_knobs).forEach(function (k) {
@@ -243,8 +245,10 @@
         if (info.error) throw new Error(info.error);
         S.upload = info;
         $("#csv-info").textContent = info.n_rows + " rows × " + info.columns.length + " columns";
-        ["#target", "#sensitive"].forEach(function (sel) {
-          var s = $(sel); s.innerHTML = sel === "#sensitive" ? "<option value=''>(none)</option>" : "";
+        ["#target", "#sensitive", "#train-rows"].forEach(function (sel) {
+          var s = $(sel);
+          s.innerHTML = sel === "#sensitive" ? "<option value=''>(none)</option>" :
+            sel === "#train-rows" ? "<option value=''>(not given: ethikit splits at random)</option>" : "";
           info.columns.forEach(function (c) {
             s.appendChild(el("option", { value: c.name },
               esc(c.name) + " · " + esc(c.dtype) + " · " + c.nunique + " values"));
@@ -252,6 +256,7 @@
         });
         $("#target").value = info.suggest.target;
         $("#sensitive").value = info.suggest.sensitive || "";
+        $("#train-rows").value = info.suggest.train_rows || "";
         renderData(); update();
       }).catch(function (e) { $("#csv-info").innerHTML = "<span class='err'>" + esc(e.message) + "</span>"; });
   }
@@ -266,7 +271,8 @@
                         file: f.name, cls: info.class };
         $("#model-file-info").innerHTML = "<span class='ok'>✓</span> " + esc(info.class) + " loaded as <b>" +
           esc(S.modelFile.name) + "</b>" + (info.n_features_in ? " · expects " + info.n_features_in + " features" : "") +
-          " — tip: use --no-scale if you trained it on raw values";
+          " — tip: use --no-scale if you trained it on raw values, and mark its training rows with --train-rows " +
+          "(otherwise ethikit can't know which rows it saw, and the privacy attacks are skipped)";
         update();
       }).catch(function (e) { $("#model-file-info").innerHTML = "<span class='err'>" + esc(e.message) + "</span>"; });
   }
@@ -403,6 +409,7 @@
       if ($("#exclude-sensitive").checked) data.exclude_sensitive = true;
       if ($("#positive-label").value) data.positive_label = $("#positive-label").value;
       if ($("#sensitive-threshold").value) data.sensitive_threshold = parseFloat($("#sensitive-threshold").value);
+      if ($("#train-rows").value) data.train_rows = $("#train-rows").value;
     }
     if (S.source === "synthetic_custom") data.synthetic = S.synth;
     var models = [];
@@ -455,6 +462,7 @@
       if (c.data.exclude_sensitive) parts.push("--exclude-sensitive");
       if (c.data.positive_label) parts.push("--positive-label " + c.data.positive_label);
       if (c.data.sensitive_threshold != null) parts.push("--sensitive-threshold " + c.data.sensitive_threshold);
+      if (c.data.train_rows) parts.push("--train-rows " + c.data.train_rows);
     } else if (S.source === "synthetic_custom") {
       var kv = []; var d = S.meta.synthetic_knobs;
       for (var k in S.synth) if (String(S.synth[k]) !== String(d[k])) kv.push(k + "=" + S.synth[k]);
@@ -570,6 +578,7 @@
         G && G.fitStart(e.model); break;
       case "model_fit_done":
         log("ok", "      ✓ " + e.model + " ready in " + e.seconds.toFixed(2) + "s");
+        if (e.membership_known === false) log("skip", "      rows: " + e.rows_used);
         G && G.fitDone(e.model); break;
       case "tool_start":
         log("run", "exec  " + e.tool + " → " + e.model);
@@ -1029,9 +1038,23 @@
       ts.innerHTML = ""; Object.keys(r.traces[ms.value] || {}).forEach(function (t) { ts.appendChild(el("option", { value: t }, esc(t))); });
       show();
     }
-    function show() { body.innerHTML = ""; body.appendChild(inspectView(ms.value, ts.value)); if (S.live) body.appendChild(rowExplainer(ms.value)); }
+    function show() { body.innerHTML = ""; body.appendChild(rowsUsedView(ms.value)); body.appendChild(inspectView(ms.value, ts.value)); if (S.live) body.appendChild(rowExplainer(ms.value)); }
     ms.addEventListener("change", fillTools); ts.addEventListener("change", show);
     if (models.length) fillTools(); else body.innerHTML = "<div class='empty'>no traces</div>";
+  }
+
+  // which rows this model was trained / scored on, and every tool that did not run for it (with why)
+  function rowsUsedView(model) {
+    var r = S.result; var txt = (r.rows_used || {})[model];
+    var skipped = (r.skipped || {})[model] || [];
+    var unknown = (r.membership_known || {})[model] === false;
+    var d = el("div", { class: "block" });
+    if (!txt && !skipped.length) return d;
+    d.innerHTML = (txt ? "<h3>which rows were used</h3><div class='" + (unknown ? "note" : "prose") + "'>" + esc(txt) + "</div>" : "") +
+      (skipped.length ? "<h3>tools that did not run for " + esc(model) + "</h3><div class='tscroll'><table class='t'><tr><th>tool</th><th>principles</th><th>why</th></tr>" +
+        skipped.map(function (t) { return "<tr><td>" + esc(t.name) + "</td><td class='l'>" + esc((t.principles || []).join(", ")) + "</td><td class='l'>" + esc(t.reason) + "</td></tr>"; }).join("") +
+        "</table></div>" : "");
+    return d;
   }
 
   function rowExplainer(model) {

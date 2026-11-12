@@ -48,18 +48,23 @@ def card_json(card: Dict[str, object], limits: Optional[Dict[str, str]] = None,
                                     f"trained and evaluated on {card['dataset_name']}.")
     prof = card.get("data_profile") or {}
     data_desc = (f"{prof.get('n_rows', '?')} rows, {prof.get('n_features', '?')} features, task "
-                 f"{prof.get('task', '?')}; held-out split used for every metric.") if prof else ""
+                 f"{prof.get('task', '?')}. ") if prof else ""
+    data_desc += card.get("rows_used") or "Every metric is computed on the held-out split."
     dataset = {"name": str(card["dataset_name"]), "description": data_desc}
     if card.get("sensitive_name"):
         dataset["sensitive"] = {"sensitive_data": [f"sensitive attribute compared across groups: "
                                                    f"{card['sensitive_name']}"]}
 
     metrics = [{"type": f"{m['principle']}/{m['evaluator']}/{m['metric']}", "value": _fmt(m["value"]),
-                "slice": "held-out test set"}
+                "slice": ("ethikit's test split (the model's training rows are unknown, so it may "
+                          "include rows the model was trained on)"
+                          if card.get("membership_known") is False else "held-out test set")}
                for m in card["metrics"] if m["value"] is not None]
 
     tools_used = sorted({m["evaluator"] for m in card["metrics"]})
     lims: List[dict] = [{"description": f"{t}: {limits[t]}"} for t in tools_used if limits.get(t)]
+    if card.get("rows_used"):
+        lims.insert(0, {"description": "Rows used: " + card["rows_used"]})
     lims.append({"description": "Scores are relative to the candidates in this run (0-1 per principle), "
                                 "not absolute guarantees; several fairness criteria cannot all hold at once."})
 
@@ -88,8 +93,12 @@ def card_json(card: Dict[str, object], limits: Optional[Dict[str, str]] = None,
                                               "and keep it with this card." if not card.get("checklist") else
                                               f"Governance checklist '{card['checklist'].get('checklist')}' attached to the HTML card.")})
     for t in card.get("tools_not_run") or []:
-        risks.append({"name": f"Tool '{t['name']}' did not run ({', '.join(t['principles'])} less evidenced)",
-                      "mitigation_strategy": f"Install it and re-run: {t.get('hint') or 'see requirements.txt'}"})
+        installed_missing = t.get("reason", "not installed on this machine") == "not installed on this machine"
+        risks.append({"name": f"Tool '{t['name']}' did not run ({', '.join(t['principles'])} less evidenced)"
+                              + ("" if installed_missing else f": {t['reason']}"),
+                      "mitigation_strategy": (f"Install it and re-run: {t.get('hint') or 'see requirements.txt'}"
+                                              if installed_missing else
+                                              "Address the reason above and re-run.")})
 
     return {
         "schema_version": SCHEMA_VERSION,

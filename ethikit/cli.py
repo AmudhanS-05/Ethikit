@@ -73,6 +73,8 @@ def config_from_args(a: argparse.Namespace) -> dict:
             data[k] = getattr(a, k)
     if a.exclude_sensitive:
         data["exclude_sensitive"] = True
+    if getattr(a, "train_rows", None):
+        data["train_rows"] = a.train_rows
     if a.synthetic:
         data["source"] = "synthetic_custom"
         data["synthetic"] = {k: v for k, _, v in (p.partition("=") for p in a.synthetic)}
@@ -151,6 +153,8 @@ class LiveLog:
             print(f"{t} {B('fit')}   {e['model']}{D(' (pre-fitted, not refit)') if e['prefit'] else ''}")
         elif kind == "model_fit_done":
             print(f"{t}       {G('ok')} {e['model']} in {e['seconds']:.2f}s")
+            if e.get("membership_known") is False or self.verbose:
+                print(f"{t}       {(Y if e.get('membership_known') is False else D)('rows: ' + e.get('rows_used', ''))}")
         elif kind == "tool_start" and self.verbose:
             print(f"{t} {D('exec')}  {e['tool']} → {e['model']}")
         elif kind == "tool_done":
@@ -160,7 +164,7 @@ class LiveLog:
             print(f"{t} {G('✓')} {e['tool']:<22}{D(f'[{self.done}/{self.total}]')} {vals}")
         elif kind == "tool_skip":
             self.done += 1
-            if self.verbose:
+            if self.verbose or e.get("membership"):
                 print(f"{t} {Y('skip')}  {e['tool']} → {e['model']}: {e['reason']}")
         elif kind == "tool_error":
             self.done += 1
@@ -699,6 +703,10 @@ def build_parser() -> argparse.ArgumentParser:
                    help="add any estimator class, e.g. xt=sklearn.ensemble.ExtraTreesClassifier")
     r.add_argument("--model-file", action="append", metavar="NAME=PATH",
                    help="evaluate your own pre-trained model (joblib/pickle) as-is")
+    r.add_argument("--train-rows", metavar="COLUMN",
+                   help="CSV column marking the rows your model was trained on (train/holdout, 1/0, "
+                        "true/false): every score uses the holdout rows, the privacy attacks use the "
+                        "train rows as members. Without it a --model-file's privacy attacks are skipped"),
     r.add_argument("--tools", help="comma-separated subset of tools (default: all available)")
     r.add_argument("--tool-param", action="append", metavar="TOOL.KEY=VALUE",
                    help="override a tool's parameter, e.g. robustness.sigma=0.2 (repeatable)")
@@ -727,6 +735,7 @@ def build_parser() -> argparse.ArgumentParser:
     pf.add_argument("--data", default="synthetic")
     pf.add_argument("--target"); pf.add_argument("--sensitive"); pf.add_argument("--sensitive-threshold", type=float)
     pf.add_argument("--positive-label"); pf.add_argument("--exclude-sensitive", action="store_true")
+    pf.add_argument("--train-rows", metavar="COLUMN", help="CSV column marking training rows (kept out of the features)")
     pf.add_argument("--synthetic", nargs="+", metavar="KEY=VALUE")
     pf.add_argument("--seed", type=int, default=0)
     for k, v in dict(models=None, family=None, model_param=None, estimator=None, model_file=None, tools=None,
@@ -743,6 +752,7 @@ def build_parser() -> argparse.ArgumentParser:
             sp.set_defaults(**{k: v})
         sp.add_argument("--data", default="synthetic")
         sp.add_argument("--target"); sp.add_argument("--sensitive")
+        sp.add_argument("--train-rows", metavar="COLUMN", help="CSV column marking the model's training rows")
         sp.add_argument("--models", help="comma-separated model names")
         sp.add_argument("--seed", type=int, default=0)
 

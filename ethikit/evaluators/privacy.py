@@ -87,7 +87,8 @@ class MembershipInferenceEvaluator(Evaluator):
         "membership leakage from this feature); higher means the model's "
         "outputs let an attacker tell training rows apart from held-out rows."
     )
-    limits = ('One black-box attack (confidence/loss threshold) on held-out vs training rows. It does not cover attribute inference (see attribute_inference), model extraction, or data reconstruction, and it is not a differential-privacy guarantee.')
+    limits = ('One black-box attack (confidence/loss threshold) on held-out vs training rows. It does not cover attribute inference (see attribute_inference), model extraction, or data reconstruction, and it is not a differential-privacy guarantee. For a pre-trained model it runs only when you mark its real training rows (--train-rows); otherwise it is skipped, because guessed members would make the attack look harmless.')
+    needs_membership = True
     formula = (
         "per row: conf(x, y) = f(x)[y],  loss(x, y) = −log conf(x, y)\n"
         "members M = n train rows, non-members N = n test rows (balanced)\n"
