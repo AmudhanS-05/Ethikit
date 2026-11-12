@@ -37,6 +37,10 @@ class Evaluator(ABC):
     install_hint: str = ""
     #: what this tool does NOT measure -- shown next to its numbers so nobody over-reads them.
     limits: str = ""
+    #: True when the tool's numbers only mean something if ethikit knows which rows the model was
+    #: trained on (e.g. a membership-inference attack needs real members). The runner skips such a
+    #: tool, with a stated reason, for a pre-trained model whose training rows were not given.
+    needs_membership: bool = False
 
     def params(self) -> Dict[str, Any]:
         """Tunable knobs: every public scalar attribute set in __init__ (sample

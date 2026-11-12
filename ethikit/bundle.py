@@ -72,6 +72,9 @@ def _metrics_rows(summary: dict) -> List[dict]:
 def _frames(summary: dict):
     raw = pd.DataFrame(summary.get("records") or [])
     raw.attrs["traces"] = summary.get("traces") or {}
+    raw.attrs["skipped"] = summary.get("skipped") or {}
+    raw.attrs["rows_used"] = summary.get("rows_used") or {}
+    raw.attrs["membership_known"] = summary.get("membership_known") or {}
     obj = pd.DataFrame(summary["objective"]).T.astype(float)
     return raw, obj
 

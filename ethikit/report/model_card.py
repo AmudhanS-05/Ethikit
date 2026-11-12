@@ -66,7 +66,10 @@ def _card_data(model_name: str, dataset_name: str, sensitive_name: Optional[str]
               hyperparameters: Optional[Dict[str, object]] = None,
               origin: Optional[str] = None,
               traces: Optional[Dict[str, dict]] = None,
-              checklist: Optional[dict] = None) -> Dict[str, object]:
+              checklist: Optional[dict] = None,
+              rows_used: Optional[str] = None,
+              skipped: Optional[List[dict]] = None,
+              membership_known: Optional[bool] = None) -> Dict[str, object]:
     rows = raw[(raw["model"] == model_name) & (raw["target"] != "error")]
     metrics = [
         {"evaluator": r.evaluator, "principle": r.principle, "target": r.target,
@@ -93,9 +96,15 @@ def _card_data(model_name: str, dataset_name: str, sensitive_name: Optional[str]
         "pareto_optimal": in_pareto,
         "governance_only_principles": _governance_only_principles(),
         "tool_coverage": _tool_coverage_for_card(metrics),
+        "rows_used": rows_used,
+        "membership_known": membership_known,      # None = not recorded (older runs)
+        # tools that did not run: not installed here, or skipped for this model (with the reason)
         "tools_not_run": [{"name": ev.name, "principles": list(ev.principle_ids),
-                           "hint": ev.install_hint}
-                          for ev in all_evaluators() if not ev.available()],
+                           "hint": ev.install_hint, "reason": "not installed on this machine"}
+                          for ev in all_evaluators() if not ev.available()]
+                         + [{"name": t["name"], "principles": list(t.get("principles") or []),
+                             "hint": "", "reason": t.get("reason") or "skipped"}
+                            for t in (skipped or [])],
     }
 
 
@@ -263,13 +272,17 @@ def _render_card_html(card: Dict[str, object]) -> str:
     profile_html = _profile_html(card.get("data_profile"))
     not_run = ""
     if card.get("tools_not_run"):
-        not_run = ("<h2>Tools that did not run</h2><p class='muted'>These registered tools were "
-                   "unavailable on the machine that produced this card, so their principles may be "
-                   "less well evidenced than a full install would give.</p><table><tr><th>Tool</th>"
-                   "<th>Principles</th><th>To enable</th></tr>" + "".join(
+        not_run = ("<h2>Tools that did not run</h2><p class='muted'>These registered tools produced "
+                   "no number for this model -- not installed on the machine that produced this card, "
+                   "or skipped for the reason given -- so their principles are less well evidenced "
+                   "here than a full run would give.</p><table><tr><th>Tool</th>"
+                   "<th>Principles</th><th>Why</th><th>To enable</th></tr>" + "".join(
                        f"<tr><td>{esc(t['name'])}</td><td>{esc(', '.join(t['principles']))}</td>"
-                       f"<td><code>{esc(t['hint'] or 'see requirements.txt')}</code></td></tr>"
+                       f"<td class='mech'>{esc(t.get('reason') or '')}</td>"
+                       f"<td>{('<code>' + esc(t['hint']) + '</code>') if t.get('hint') else ('-' if t.get('reason') != 'not installed on this machine' else '<code>see requirements.txt</code>')}</td></tr>"
                        for t in card["tools_not_run"]) + "</table>")
+    rows_html = (f"<h2>Which rows were used</h2><p>{esc(card['rows_used'])}</p>"
+                 if card.get("rows_used") else "")
 
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -282,6 +295,7 @@ def _render_card_html(card: Dict[str, object]) -> str:
 <h2>Model details</h2>
 <p>{origin}</p>
 <table><tr><th>Hyperparameter</th><th>Value</th></tr>{hparams_rows}</table>
+{rows_html}
 
 <h2>Intended use</h2>
 <p>Demonstration / benchmarking artifact for comparing candidate models on utility and
@@ -354,7 +368,10 @@ def build_card(model_name: str, dataset_name: str, raw: pd.DataFrame,
     `data_profile` is profile.profile_raw() for the dataset."""
     traces = (raw.attrs.get("traces") or {}).get(model_name, {})
     card = _card_data(model_name, dataset_name, sensitive_name, raw, profile.loc[model_name],
-                      model_name in pareto, hyperparameters, origin, traces, checklist)
+                      model_name in pareto, hyperparameters, origin, traces, checklist,
+                      rows_used=(raw.attrs.get("rows_used") or {}).get(model_name),
+                      skipped=(raw.attrs.get("skipped") or {}).get(model_name),
+                      membership_known=(raw.attrs.get("membership_known") or {}).get(model_name))
     card["requirements"] = requirements
     card["data_profile"] = data_profile
     return card

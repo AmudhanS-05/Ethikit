@@ -10,6 +10,8 @@ equivalent CLI command and a recorded run can be replayed:
             "upload_id": "...",            # source=upload (console)
             "target": "y", "sensitive": "sex", "exclude_sensitive": false,
             "positive_label": null, "sensitive_threshold": null,
+            "train_rows": "is_train",      # csv/upload: column marking the rows the model was
+                                           # trained on (train/holdout); scores use holdout rows only
             "synthetic": {"n": 4000, "bias": 0.9, ...}},   # source=synthetic_custom
   "split": {"test_size": 0.3, "seed": 0, "scale": true},
   "models": [{"name": "random_forest", "params": {"max_depth": 5}},
@@ -26,6 +28,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
+import numpy as np
 import pandas as pd
 
 from . import checklists as checklists_mod
@@ -79,8 +82,11 @@ class PreparedRun:
 
 def load_raw(data: Dict[str, Any], uploads: Optional[Dict[str, pd.DataFrame]] = None):
     src = data.get("source", "synthetic")
-    common = {k: data[k] for k in ("exclude_sensitive", "positive_label", "sensitive_threshold")
+    common = {k: data[k] for k in ("exclude_sensitive", "positive_label", "sensitive_threshold",
+                                   "train_rows")
               if data.get(k) not in (None, "")}
+    if common.get("train_rows") and src not in ("csv", "upload"):
+        raise ValueError("--train-rows marks rows of your own CSV; it needs --data path/to/file.csv")
     if src == "synthetic":
         return loaders.make_synthetic_fairness_raw()
     if src == "synthetic_custom":
@@ -125,8 +131,19 @@ def prepare(config: Dict[str, Any], uploads: Optional[Dict[str, pd.DataFrame]] =
     cv = (int(cv[0]), int(cv[1])) if cv else None
     if cv and (cv[0] < 2 or cv[1] < 1):
         raise ValueError("cv needs at least 2 folds and 1 repeat, e.g. 5x3")
-    ds = loaders.split_dataset(raw, seed=int(split["seed"]), test_size=float(split["test_size"]),
-                               scale=bool(split["scale"]))
+    if raw.train_mask is not None:
+        if cv:
+            raise ValueError("--train-rows fixes which rows are training data, so it can't be "
+                             "combined with --cv; remove one of them")
+        ds = loaders.split_dataset(raw, train_idx=np.flatnonzero(raw.train_mask),
+                                   test_idx=np.flatnonzero(~raw.train_mask),
+                                   scale=bool(split["scale"]))
+        ds.split_info = {"source": "column", "column": raw.train_rows_column}
+    else:
+        ds = loaders.split_dataset(raw, seed=int(split["seed"]), test_size=float(split["test_size"]),
+                                   scale=bool(split["scale"]))
+        ds.split_info = {"source": "random", "test_size": float(split["test_size"]),
+                         "seed": int(split["seed"])}
 
     if cv and any(m.get("file") or m.get("upload_model_id") for m in (config.get("models") or [])):
         raise ValueError("pre-trained models can't be cross-validated (they are not refit); "
@@ -170,6 +187,15 @@ def prepare(config: Dict[str, Any], uploads: Optional[Dict[str, pd.DataFrame]] =
             raise ValueError(f"model {name!r}: {exc}") from exc
 
     evaluators = select_evaluators(config.get("tools"), config.get("tool_params"))
+    if raw.train_mask is None:
+        needs = [e.name for e in evaluators if e.needs_membership]
+        for name in prefit:
+            notes.append(
+                f"{name} is pre-trained and ethikit was not told which rows it was trained on: "
+                + (f"{' and '.join(needs)} will be skipped for it, and " if needs else "")
+                + f"if the {len(ds.y_test)} rows it is scored on overlap its training data, "
+                f"performance and fairness can look better than on new data. Mark the training "
+                f"rows with --train-rows COLUMN.")
     weights = {**DEFAULT_WEIGHTS, **(config.get("weights") or {})}
     checklist = config.get("checklist")
     if checklist and checklist.get("checklist") not in checklists_mod.CHECKLISTS:
@@ -225,6 +251,9 @@ def execute(run: PreparedRun, on_event: Optional[Callable[[dict], None]] = None)
             "ranking": list(ranked.index),
             "pareto": front, "weights": run.weights,
             "records": records, "traces": raw.attrs.get("traces", {}),
+            "rows_used": raw.attrs.get("rows_used", {}), "skipped": raw.attrs.get("skipped", {}),
+            "membership_known": raw.attrs.get("membership_known", {}),
+            "split": run.dataset.split_info,
             "families": {m: family_of(m) for m in obj.index},
             "cv": list(run.cv) if run.cv else None,
             "objective_std": None if obj_std is None else {
@@ -275,6 +304,9 @@ def _execute_cv(run: PreparedRun, on_event):
     agg = (cvdf.groupby(key, dropna=False)["value"].mean().reset_index()
            .merge(cvdf.drop_duplicates(key)[key + ["mechanism"]], on=key, how="left"))
     agg.attrs["traces"] = cvdf.attrs.get("traces", {})
+    agg.attrs["skipped"] = cvdf.attrs.get("skipped", {})
+    agg.attrs["rows_used"] = cvdf.attrs.get("rows_used", {})
+    agg.attrs["membership_known"] = cvdf.attrs.get("membership_known", {})
     emit({"type": "run_done", "n_records": len(agg)})
     return agg, obj, std
 

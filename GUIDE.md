@@ -82,6 +82,9 @@ Synthetic knobs (`--synthetic key=value`): `n`=4000, `n_features`=4, `bias`=0.9,
 - `--models`: tick any of the built-in models, grouped in families. Classification: linear (`logistic_regression`), tree_based (`decision_tree`, `random_forest`, `gradient_boosting`), instance_based (`knn`), probabilistic (`naive_bayes`), kernel (`svc`), deep (`mlp`, plus `torch_mlp` and `torch_mlp_dp` with PyTorch). Regression has its own set.
 - `--estimator name=import.path`: add any scikit-learn-style class, e.g. `xt=sklearn.ensemble.ExtraTreesClassifier`.
 - `--model-file`: audit your own **pre-trained** model (joblib/pickle/`.pt`/`.keras`) as-is. Only load files you trust, because loading can run code.
+- `--train-rows COLUMN` (console: the **--train-rows** row under your CSV): a column of your CSV that says which rows the pre-trained model was **trained on**: `train`/`holdout`, `1`/`0`, `true`/`false` (also `test`, `yes`/`no`, `member`/`non-member`). Any other value, or an empty cell, is an error. The column is never given to the model as a feature. The console pre-selects a column called `is_train`, `train` or `split` when every value in it parses. ethikit does not refit your model, so it cannot know which rows the model saw unless you say:
+  - **With the column**, every score is computed on the holdout rows only, and the privacy attacks use the marked training rows as members. Built-in models in the same run are trained on the same marked rows. It cannot be combined with `--cv`.
+  - **Without it**, ethikit splits your rows at random as usual, which is wrong for a model trained elsewhere. `membership_inference` and `attribute_inference` are **skipped** for the pre-trained model, with the reason in the log, in inspect and on the model card. Without real members the attack would report a falsely reassuring advantage near 0. Performance and fairness still run, on a random `--test-size` share of your rows (30% by default). If some of those rows were in the model's training data, the scores can look **better than on new data**. The model card says so under "Which rows were used".
 - **advanced**: every hyperparameter of every selected model and every tool parameter. Values are Python literals (`200`, `0.1`, `None`, `'balanced'`, `(64, 32)`). Changed values become `--model-param` / `--tool-param` flags.
 
 ### 3.5 Requirements (`--require`)
@@ -128,11 +131,11 @@ and you can scroll it with the keyboard. With cross-validation the graph animate
 - **Export audit bundle (.zip)**: see section 8.
 
 ### 5.2 inspect
-Pick a model and a tool to see exactly how a number was produced: the **formula**, the **worked steps with this run's real numbers**, charts (for example the member vs non-member histograms for membership inference), and a **"what this does not measure"** box.
+Pick a model and a tool to see exactly how a number was produced. At the top: **which rows were used** for that model (its training rows and the rows it was scored on) and every tool that **did not run** for it, with the reason. Below that: the **formula**, the **worked steps with this run's real numbers**, charts (for example the member vs non-member histograms for membership inference), and a **"what this does not measure"** box.
 The "explain row" box shows, for one test row, which features pushed the decision up (green) or down (red, below the zero line).
 
 ### 5.3 model-card
-A model card per model: what was measured, quantitative analysis, requirements you set, what the data says before any model, which tools did not run (with install commands), and **how each number was computed**.
+A model card per model: **which rows were used** (trained on and scored on, and for a pre-trained model whether you marked its training rows), what was measured, quantitative analysis, requirements you set, what the data says before any model, which tools did not run and why (not installed, with the install command, or skipped, for example the privacy attacks for a pre-trained model with no `--train-rows`), and **how each number was computed**.
 Downloads: HTML card, and `.mct.json` (Google Model Card Toolkit format, schema v0.0.2).
 Printing (Ctrl/Cmd+P) gives a white, title-bar-free page with every section expanded, ready to save as PDF.
 
@@ -167,11 +170,11 @@ Each reports raw metrics, converts them to 0–1 scores per principle, and state
 | art_robustness | safety | Adversarial robustness with a small query budget (HopSkipJump via IBM ART). The first worked step lists the attack budget. |
 | drift_detection | safety | Kolmogorov–Smirnov drift per feature under a manufactured shift (alibi-detect). |
 | giskard | fairness, safety | Giskard's automated vulnerability scan, on a sample. Heuristic. |
-| membership_inference | privacy | A black-box attack asking "was this row in the training data?". Reports the attacker's advantage. Overfit models leak more. |
-| attribute_inference | privacy | Can the attacker recover the sensitive attribute from the model's outputs? A second privacy attack. |
+| membership_inference | privacy | A black-box attack asking "was this row in the training data?". Reports the attacker's advantage. Overfit models leak more. Needs the real training rows: for a pre-trained model it runs only with `--train-rows`, and is skipped (with the reason) otherwise. |
+| attribute_inference | privacy | Can the attacker recover the sensitive attribute from the model's outputs? A second privacy attack. It attacks rows known to be held out, so for a pre-trained model it also needs `--train-rows`. |
 | captum_ig | explainability | Integrated-gradient attributions for PyTorch models, with a completeness check. Needs torch + captum. |
 
-Every tool follows a contract (tested): finite numbers, a formula, a run-specific mechanism, a trace, a stated limit, and identical results for a fixed seed.
+Every tool follows a contract (tested): finite numbers, a formula, a run-specific mechanism, a trace, a stated limit, and identical results for a fixed seed. A tool whose numbers depend on knowing the model's training rows declares it (`needs_membership`), and it is skipped with a stated reason, never run on guessed members, when those rows are unknown (a pre-trained model without `--train-rows`).
 
 ## 7. Reference suites (no data of your own)
 

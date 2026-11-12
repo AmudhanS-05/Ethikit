@@ -39,6 +39,41 @@ class RawData:
     feature_names: List[str]
     name: str
     task: TaskType = TaskType.CLASSIFICATION
+    #: per row: True = the model was trained on it, False = holdout. Set only when the user
+    #: marked the rows (prepare_frame(train_rows=COLUMN)); None = ethikit picks the split itself.
+    train_mask: Optional[np.ndarray] = None
+    train_rows_column: Optional[str] = None
+
+
+#: accepted spellings in a --train-rows column (compared lower-cased, stripped)
+TRAIN_VALUES = {"train", "training", "trained", "member", "in", "1", "true", "yes", "y", "t"}
+HOLDOUT_VALUES = {"holdout", "hold-out", "held-out", "heldout", "test", "eval", "evaluation",
+                  "validation", "non-member", "nonmember", "out", "0", "false", "no", "n", "f"}
+
+
+def parse_train_rows(values, column: str) -> np.ndarray:
+    """A column marking each row train vs holdout -> boolean mask (True = trained on).
+    Strict on purpose: a typo silently counted as 'holdout' would make the privacy attacks lie."""
+    import pandas as pd
+    s = pd.Series(values)
+    if s.isna().any():
+        raise ValueError(f"--train-rows column '{column}' has {int(s.isna().sum())} empty value(s); "
+                         f"mark every row as train or holdout")
+    if pd.api.types.is_bool_dtype(s):
+        norm = s.map({True: "true", False: "false"})
+    elif pd.api.types.is_numeric_dtype(s):
+        norm = s.map(lambda v: str(int(v)) if float(v) in (0.0, 1.0) else str(v))
+    else:
+        norm = s.astype(str).str.strip().str.lower()
+    bad = sorted(set(norm) - TRAIN_VALUES - HOLDOUT_VALUES)
+    if bad:
+        raise ValueError(f"--train-rows column '{column}' has value(s) {', '.join(map(repr, bad[:5]))} "
+                         f"that are neither train (train/1/true/yes) nor holdout (holdout/test/0/false/no)")
+    mask = norm.isin(TRAIN_VALUES).to_numpy()
+    if mask.all() or not mask.any():
+        raise ValueError(f"--train-rows column '{column}' marks every row as "
+                         f"{'train' if mask.all() else 'holdout'}; need both training rows and holdout rows")
+    return mask
 
 
 def split_dataset(raw: RawData, seed: int = 0, test_size: float = 0.3,
@@ -179,7 +214,8 @@ def load_adult(seed=0) -> Dataset:
 def prepare_frame(df, target: str, sensitive: Optional[str] = None, name: str = "custom",
                   task: Optional[str] = None, drop: Optional[List[str]] = None,
                   exclude_sensitive: bool = False, sensitive_threshold: Optional[float] = None,
-                  positive_label: Optional[str] = None, max_categories: int = 20) -> RawData:
+                  positive_label: Optional[str] = None, max_categories: int = 20,
+                  train_rows: Optional[str] = None) -> RawData:
     """Turn any pandas DataFrame into a RawData the whole pipeline can run on.
 
     - target: column to predict. Classification vs regression is inferred
@@ -195,12 +231,18 @@ def prepare_frame(df, target: str, sensitive: Optional[str] = None, name: str = 
       ("fairness through unawareness" -- proxies can still leak it).
     - features: everything else minus `drop`; numeric NaNs -> median,
       categoricals one-hot encoded (top `max_categories` levels, rest -> "other").
+    - train_rows: column marking which rows the model was trained on (train/holdout, 1/0,
+      true/false). It is never a feature; RawData.train_mask carries it, and the run then
+      scores on holdout rows only and uses the train rows as the privacy attacks' members.
     """
     import pandas as pd
 
     df = df.copy()
     drop = [c for c in (drop or []) if c in df.columns]
-    missing = [c for c in [target, sensitive] if c and c not in df.columns]
+    if train_rows and train_rows in (target, sensitive):
+        raise ValueError(f"--train-rows column '{train_rows}' can't also be the target or the "
+                         f"sensitive column")
+    missing = [c for c in [target, sensitive, train_rows] if c and c not in df.columns]
     if missing:
         raise KeyError(f"column(s) not in data: {', '.join(missing)} "
                        f"(available: {', '.join(map(str, df.columns))})")
@@ -237,7 +279,9 @@ def prepare_frame(df, target: str, sensitive: Optional[str] = None, name: str = 
         else:
             sens = s.astype(str).to_numpy()
 
-    feats = df.drop(columns=[target] + drop + ([sensitive] if sensitive and exclude_sensitive else []))
+    train_mask = parse_train_rows(df[train_rows].to_numpy(), train_rows) if train_rows else None
+    feats = df.drop(columns=[target] + drop + ([sensitive] if sensitive and exclude_sensitive else [])
+                    + ([train_rows] if train_rows else []))
     num = feats.select_dtypes(include="number")
     num = num.fillna(num.median())
     cat = feats.drop(columns=num.columns)
@@ -251,7 +295,8 @@ def prepare_frame(df, target: str, sensitive: Optional[str] = None, name: str = 
     if X.shape[1] == 0:
         raise ValueError("no feature columns left after removing target/sensitive/drop")
     return RawData(X=X.to_numpy(dtype=float), y=y, sensitive=sens, sensitive_name=sens_name,
-                   feature_names=[str(c) for c in X.columns], name=name, task=task_t)
+                   feature_names=[str(c) for c in X.columns], name=name, task=task_t,
+                   train_mask=train_mask, train_rows_column=train_rows or None)
 
 
 def load_csv(path: str, target: str, sensitive: Optional[str] = None, **kw) -> RawData:

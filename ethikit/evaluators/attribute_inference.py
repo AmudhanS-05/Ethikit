@@ -39,7 +39,10 @@ class AttributeInferenceEvaluator(Evaluator):
         "attribute_inference_gain = max(0, AUC(A₁) − AUC(A₀))      (out-of-fold)"
     )
     limits = ("Black-box, test-set rows only; a stronger attacker (more features, more queries, "
-              "auxiliary data) could recover more; it does not measure leakage of other attributes.")
+              "auxiliary data) could recover more; it does not measure leakage of other attributes. "
+              "For a pre-trained model it runs only when you mark its training rows (--train-rows), "
+              "so that the rows attacked are known to be held out.")
+    needs_membership = True
 
     def __init__(self, n_splits: int = 5, seed: int = 0, min_rows: int = 60):
         self.n_splits = n_splits

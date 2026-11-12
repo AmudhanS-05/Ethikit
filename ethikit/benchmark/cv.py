@@ -66,9 +66,17 @@ def run_benchmark_cv(raw: RawData,
             batch["seed"] = fold_seed
             batches.append(batch)
             traces.update({k: v for k, v in batch.attrs.get("traces", {}).items()})
+            last = batch.attrs
 
     out = pd.concat(batches, ignore_index=True)
     out.attrs["traces"] = traces          # the last fold's traces: enough to show how a number is made
+    if batches:
+        out.attrs["skipped"] = last.get("skipped", {})
+        out.attrs["membership_known"] = last.get("membership_known", {})
+        out.attrs["rows_used"] = {m: f"Repeated {n_splits}-fold cross-validation ({n_repeats} "
+                                     f"repeat(s)): every score is a mean over folds, each fold "
+                                     f"trained on its training rows and scored on its held-out rows."
+                                  for m in last.get("rows_used", {})}
     return out
 
 

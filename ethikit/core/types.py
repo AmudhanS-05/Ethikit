@@ -28,6 +28,10 @@ class Dataset:
     sensitive_test: Optional[np.ndarray] = None    # protected group per test row
     sensitive_name: Optional[str] = None
     feature_names: Optional[List[str]] = None
+    #: how the train/test rows were chosen, for saying so on the model card:
+    #: {"source": "random", "test_size": 0.3, "seed": 0} or
+    #: {"source": "column", "column": "is_train"} (the user marked the rows). None = not recorded.
+    split_info: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -39,6 +43,10 @@ class EvalContext:
     y_pred_train: Any = None    # cached train predictions (for leakage checks)
     y_proba: Any = None         # cached test probabilities if available
     y_proba_train: Any = None   # cached train probabilities if available (membership inference)
+    #: True when X_train really is this model's training data (ethikit fitted it there, or the
+    #: user marked the rows). False for a pre-trained model with no --train-rows: tools whose
+    #: numbers depend on training-set membership (Evaluator.needs_membership) are then skipped.
+    membership_known: bool = True
 
 
 @dataclass
