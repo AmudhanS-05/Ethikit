@@ -178,7 +178,21 @@ Every tool follows a contract (tested): finite numbers, a formula, a run-specifi
 
 ## 7. Reference suites (no data of your own)
 
-In suite mode pick a domain: **census** (suite of 16 datasets), **lending** (3), **health** (1), **justice** (1), and **hiring**, which is an explicit *gap* (no public datasets, so the run button is disabled and you are told to bring your own data).
+In suite mode pick a domain: **census** (suite of 16 datasets), **lending** (4), **health** (3), **education** (2), **justice** (1), and **hiring**, which is an explicit *gap* (no public datasets, so the run button is disabled and you are told to bring your own data).
+
+| Domain | Datasets (sensitive attribute) |
+|---|---|
+| census | folktables ACS tasks × 3 states (sex), UCI Adult (sex) |
+| lending | German Credit (age ≥ 25), Taiwan credit-card default (sex), bank marketing (age), **HMDA Delaware 2023** home-purchase approve/deny (race: White / Black) |
+| health | diabetes readmission (race), **MEPS 2015 panel 19** high utilisation (race: non-Hispanic White / other; AIF360's recipe, 15,830 rows), **UCI Heart Disease** Cleveland (sex; 303 rows) |
+| education | **UCI Student Performance** Portuguese course (sex; 649 rows), **OULAD** Open University module pass (gender; 22,437 rows) |
+| justice | COMPAS (race) |
+| hiring | none: bring your own data |
+
+Points to know about the new ones. HMDA uses only what the lender knew when deciding: pricing, purchaser, denial reasons and the "not applicable" codes that appear only on denials are left out, and so are race, ethnicity, sex and age. Public HMDA has no credit score, so approval gaps partly reflect what is missing. By downloading MEPS you accept AHRQ's data use agreement (statistical analysis only, no attempt to identify anyone, cite AHRQ/MEPS). With demographic and enrolment fields only, Student Performance and OULAD models barely beat always predicting "pass". That is a finding about the data, not a bug.
+
+Considered and not shipped: the **NIJ Recidivism Challenge** (Georgia), because its official host (data.ojp.usdoj.gov) no longer resolves and the remaining copies sit behind Kaggle or ICPSR logins or on unofficial mirrors; and **LSAC bar passage**, because it has no stated licence and LSAC's terms forbid redistribution. Hiring stays a gap: no genuine public hiring-decision benchmark was found.
+
 Controls: `--max-datasets`, `--max-rows`, `--states` (census). Each dataset is marked *verified* or *first run on your machine*; downloads are cached.
 Output (the **reference-suite** tab): a relative 0–1 table per model **family** (families are averaged inside the family before the suite mean, so a family with more members does not count more), a "real units" table, a "does the ordering hold up?" (Friedman) table, and caveats. A one-dataset domain says it is not cross-dataset evidence. Standard deviations show `–` when there is only one dataset.
 **Use this shortlist on my data** returns you to "my data & models" with the shortlisted models ticked and nothing run yet. The suite never names a winner; it gives a shortlist and shows its weights.

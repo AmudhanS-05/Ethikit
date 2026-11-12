@@ -49,17 +49,17 @@ Candidate suites (what is verified vs. still to check):
 | Domain | Datasets | Status |
 |---|---|---|
 | Income / employment / benefits (US census) | folktables ACS tasks: ACSIncome, ACSEmployment, ACSPublicCoverage, ACSMobility, ACSTravelTime, each repeatable over many US states -> a natural multi-dataset suite | tasks verified by search; download of Census PUMS needs network once |
-| Lending / credit | German Credit (OpenML), credit-card default and bank marketing (`fairlearn.datasets`, present locally), Adult | fairlearn loaders confirmed present |
-| Health | hospital readmission (`fairlearn.datasets.fetch_diabetes_hospital`) | loader confirmed present; more health data to find |
-| Criminal justice | COMPAS (race; ProPublica data) | not in fairlearn; manual download, to verify |
-| Education | student-performance style data | proposed in the literature; to verify |
+| Lending / credit | German Credit (OpenML), credit-card default and bank marketing (`fairlearn.datasets`, present locally), HMDA (CFPB, one state) | fairlearn loaders confirmed present; HMDA runs on real data |
+| Health | hospital readmission (`fairlearn.datasets.fetch_diabetes_hospital`), MEPS 2015 panel 19 (AHRQ), UCI Heart Disease | MEPS and Heart Disease run on real data; diabetes loader confirmed present |
+| Criminal justice | COMPAS (race; ProPublica data) | verified; NIJ Recidivism Challenge rejected (official host gone, copies behind logins) |
+| Education | UCI Student Performance, OULAD | both run on real data; LSAC bar passage rejected (no licence) |
 | Hiring / HR | no standard public benchmark found | **gap**: ship a documented synthetic suite plus "bring your own" |
 
 Honest limits to keep visible in the product: the literature itself questions whether Adult,
 COMPAS and German Credit are good general-purpose fairness benchmarks, and a domain suite is
 only as relevant as its resemblance to *your* population.
 
-**Status:** 2.1 registry, 2.3 runner/aggregation/significance/cross-domain comparison, 2.4 console + CLI (with a shortlist that always weighs utility, and absolute-unit tables beside the relative ones), 2.5 repeated CV (`--cv 5x3`) and 2.6 language audit are built and tested. COMPAS is verified on real data. **Not yet verified:** the census, OpenML and fairlearn downloads (blocked in the build sandbox) -- see TESTING.md L1-L8. **Not done:** regenerating the field guide's rigor table from a fresh run (needs `pip install pmlb` and a network); education and extra health suites (no verified source yet).
+**Status:** 2.1 registry, 2.3 runner/aggregation/significance/cross-domain comparison, 2.4 console + CLI (with a shortlist that always weighs utility, and absolute-unit tables beside the relative ones), 2.5 repeated CV (`--cv 5x3`) and 2.6 language audit are built and tested. COMPAS is verified on real data. **Not yet verified:** the census, OpenML and fairlearn downloads (blocked in the build sandbox) -- see TESTING.md L1-L8. **Not done:** regenerating the field guide's rigor table from a fresh run (needs `pip install pmlb` and a network); a second justice dataset (none found that is public without a login).
 
 **Exit:** `ethikit domains run lending` gives per-domain family tables **with fairness columns**
 and spreads; the console can show them; no doc claims a cross-domain finding the suite can't support.
