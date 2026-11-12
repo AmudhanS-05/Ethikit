@@ -9,7 +9,7 @@ pytestmark = pytest.mark.e2e
 axe_mod = pytest.importorskip("axe_playwright_python.sync_playwright")
 
 TABS = ["results", "inspect", "card", "data", "suite", "history", "gov"]
-DOCS = ["docs/", "docs/proposal.html", "docs/understanding.html", "docs/field-guide.html", "docs/report.html"]
+DOCS = ["docs/", "docs/proposal.html", "docs/understanding.html", "docs/report.html"]
 
 
 def _serious(pg):

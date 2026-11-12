@@ -65,7 +65,7 @@
 
   var DOCS = [
     ["index.html", "home"], ["proposal.html", "proposal"], ["understanding.html", "internals"],
-    ["field-guide.html", "field-guide"], ["report.html", "sample-report"], ["console/", "console"],
+    ["report.html", "sample-report"], ["console/", "console"],
   ];
 
   function bar() {

@@ -21,3 +21,6 @@ build/
 dist/
 ethikit_bundle/
 audit.zip
+
+# Presenter-only material (demo script / talking points): kept local, never published.
+presenter/

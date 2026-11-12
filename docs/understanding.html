@@ -141,7 +141,7 @@ footer a{color:var(--ink-dim)}
       <a href="#streamlit">Streamlit demo</a>
 
       <div class="part">V · Applications</div>
-      <a href="#applications">Presenting it, by audience</a>
+      <a href="#applications">Who it is for</a>
 
       <div class="part">VI · Philosophy</div>
       <a href="#philosophy">Six design decisions</a>
@@ -160,12 +160,12 @@ footer a{color:var(--ink-dim)}
 
   <div class="content">
     <div class="hero">
-      <span class="eyebrow">companion to the field guide &amp; proposal</span>
+      <span class="eyebrow">technical companion to the proposal</span>
       <h1>How Ethikit Actually Works</h1>
-      <p class="lede">Every component, explained three ways: what it does, how it works mechanically, and why it's built that way instead of some simpler alternative — plus a concrete angle for talking about its real-world application.</p>
+      <p class="lede">Every component, explained three ways: what it does, how it works mechanically, and why it's built that way instead of some simpler alternative — plus where it applies in practice.</p>
       <div class="howto">
-        <b>How to use this doc</b>
-        This isn't meant to be read in one sitting. Part I is load-bearing — read it first, since everything else assumes it. Part II is a reference: read the evaluators you'll be asked about, skim the rest. Part V is a grab-bag of "why should anyone care" framings for whichever audience you're presenting to.
+        <b>How this document is organised</b>
+        Part I covers the foundations every other component builds on, so it is the best place to start. Part II is a reference for each evaluator: read the ones relevant to your use case. Part V maps the components to the people and domains that use them.
       </div>
     </div>
 
@@ -175,7 +175,7 @@ footer a{color:var(--ink-dim)}
     <div class="part-divider" id="foundations-head">
       <span class="eyebrow">Part I</span>
       <h2>Foundations</h2>
-      <p>Five pieces everything else in the project depends on. If you only have time to deeply understand one part before a Q&amp;A, make it this one — most hard questions ("why doesn't it just...") get answered here.</p>
+      <p>Five pieces everything else in the project depends on. Most questions about why the project works the way it does ("why doesn't it just...") are answered here.</p>
     </div>
 
     <article class="component" id="taxonomy">
@@ -197,8 +197,8 @@ footer a{color:var(--ink-dim)}
         <p>Separating "can be measured" from "can't be measured" up front means every downstream score is provably complete on its own terms — nothing is silently missing from a profile, because the things that are missing are named and explained, not just absent.</p>
       </div>
       <div class="app-box">
-        <span class="lbl">Application angle</span>
-        <p>This is the answer to "who decided what counts as ethical here?" — nobody at this project did; UNESCO's 194-member-state recommendation, Microsoft's Responsible AI Standard, IBM's Pillars of Trust, and Google's AI Principles did, and this just harmonizes their overlap.</p>
+        <span class="lbl">Where it applies</span>
+        <p>It answers "who decided what counts as ethical here?" The principles come from UNESCO's 194-member-state recommendation, Microsoft's Responsible AI Standard, IBM's Pillars of Trust and Google's AI Principles; ethikit only harmonises their overlap.</p>
       </div>
     </article>
 
@@ -222,8 +222,8 @@ footer a{color:var(--ink-dim)}
         <p>Because <code>mechanism</code> is a required constructor argument (not a docstring convention), it's structurally impossible to add a new evaluator that produces a number with no explanation — the class just won't instantiate. Discipline enforced by the type system beats discipline enforced by a code-review comment.</p>
       </div>
       <div class="app-box">
-        <span class="lbl">Application angle</span>
-        <p>This is the concrete answer to "how do you know this isn't just a black box" — point at any single row in any report and read its mechanism sentence aloud. It always names the actual computation, never just repeats the number.</p>
+        <span class="lbl">Where it applies</span>
+        <p>Any row in any report can be traced to a concrete computation: its mechanism sentence names what was computed, on which rows and with which backend, rather than repeating the number.</p>
       </div>
     </article>
 
@@ -246,8 +246,8 @@ footer a{color:var(--ink-dim)}
         <p><code>runner.py</code> also wraps each evaluator's <code>.evaluate()</code> call in a try/except, turning any exception into an <code>ERROR:...</code> row rather than crashing the sweep. Combined with the registry, this means a badly-behaved third-party tool can never take down a benchmark run involving seven other, unrelated tools.</p>
       </div>
       <div class="app-box">
-        <span class="lbl">Application angle</span>
-        <p>The pitch for engineering audiences: "here's the entire interface a new ethics tool has to implement" — then show the README's ~15-line example. It fits on one screen, which is the whole point.</p>
+        <span class="lbl">Where it applies</span>
+        <p>The entire interface a new ethics tool has to implement fits on one screen: see the ~15-line example in the README.</p>
       </div>
     </article>
 
@@ -271,8 +271,8 @@ footer a{color:var(--ink-dim)}
         <p>Because both the single-split demo and repeated CV route through the same <code>split_dataset()</code> call, there is exactly one place scaling logic can go wrong, and testing it once covers both code paths.</p>
       </div>
       <div class="app-box">
-        <span class="lbl">Application angle</span>
-        <p>Good talking point on rigor: "the demo runs with zero network access and still produces a real fairness violation to detect" — because the synthetic fallback was built as a test fixture with a known-ground-truth bias, not a happy-path toy.</p>
+        <span class="lbl">Where it applies</span>
+        <p>ethikit runs with no network access and still produces a real fairness violation to detect, because the synthetic fallback is a test fixture with a known, deliberately injected bias rather than a happy-path toy.</p>
       </div>
     </article>
 
@@ -295,8 +295,8 @@ footer a{color:var(--ink-dim)}
         <p>The same reverse map that answers "which tool for principle X" before a run also powers every report's "which OTHER tool could have scored this" section after a run — one small module serving both a planning question and an accountability question.</p>
       </div>
       <div class="app-box">
-        <span class="lbl">Application angle</span>
-        <p>Demonstrates tool independence to a skeptical reviewer: "safety" currently has three evaluators corroborating it from different angles (noise, adversarial search, drift) — not one opaque number, three independently-computed ones that happen to agree.</p>
+        <span class="lbl">Where it applies</span>
+        <p>Principles are corroborated by independent tools: "safety", for example, is measured from several angles (random noise, adversarial search, drift, calibration, Giskard's scan) rather than by one opaque number.</p>
       </div>
     </article>
 
@@ -317,7 +317,7 @@ footer a{color:var(--ink-dim)}
       <p>Ordinary scikit-learn metrics against the held-out test set — accuracy, macro-F1, and ROC-AUC (if <code>predict_proba</code> exists) for classification; R², RMSE, and MAE for regression. No library beyond sklearn itself is required.</p>
       <div class="subhead">Why this design</div>
       <p>Tagged with a non-canonical <code>"utility"</code> id, deliberately outside the nine-principle taxonomy, so it forms its own axis on every radar chart and is <em>structurally excluded</em> from <code>principle_profile()</code>'s averaging. This stops utility from silently diluting an ethics score — a highly accurate but unfair model should never look "more ethical" by proxy of being accurate.</p>
-      <div class="app-box"><span class="lbl">Application angle</span><p>Every trade-off conversation in the project ("this model is 3% less accurate but its fairness gap is half the size") is only possible because utility was kept on its own separate axis instead of blended in.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>Trade-off statements such as "this model is 3% less accurate but its fairness gap is half the size" are possible because utility stays on its own axis instead of being blended into the principle scores.</p></div>
     </article>
 
     <article class="component" id="fairness">
@@ -331,7 +331,7 @@ footer a{color:var(--ink-dim)}
       <div class="subhead">Why this design</div>
       <p>Demographic parity and equalized odds are two of the most-cited fairness definitions precisely because they can contradict each other — a classifier calibrated to satisfy one can violate the other by construction (this is the Kleinberg/Chouldechova impossibility result the project cites everywhere). Reporting both, rather than picking a "winner," is the point: it makes the trade-off visible instead of hiding it behind a single fairness number.</p>
       <div class="why-box"><span class="lbl">Why it works</span><p>Both metrics are flagged <code>higher_is_better=False</code> — a gap of 0 is perfect parity — so the generic <code>normalize()</code> step correctly flips them without any fairness-specific logic anywhere else in the pipeline.</p></div>
-      <div class="app-box"><span class="lbl">Application angle</span><p>Direct fit for lending, hiring, and insurance underwriting — any domain with a legally protected class and a binary decision. "Our demographic parity gap between groups is 4%, our equalized-odds gap is 7%" is a sentence a compliance team can act on.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>Direct fit for lending, hiring, and insurance underwriting — any domain with a legally protected class and a binary decision. "Our demographic parity gap between groups is 4%, our equalized-odds gap is 7%" is a sentence a compliance team can act on.</p></div>
     </article>
 
     <article class="component" id="explainability">
@@ -343,7 +343,7 @@ footer a{color:var(--ink-dim)}
       <div class="subhead">Why this design</div>
       <p>A raw feature-importance number is meaningless without knowing whether it's a genuine SHAP attribution or a fallback approximation of one. The evaluator's <code>mechanism</code> string always names which path executed and, for the fallback, includes the surrogate's own fidelity — so "explainability = 0.8" never gets read the same way regardless of which computation actually produced it.</p>
       <div class="why-box"><span class="lbl">Why it works</span><p>Because the fallback is graceful rather than a hard failure, the explainability principle never silently goes missing from a profile just because SHAP timed out or errored on one particular model.</p></div>
-      <div class="app-box"><span class="lbl">Application angle</span><p>The GDPR "right to explanation" and similar regulatory language ask, in effect, "can you explain this decision to the person it affected" — this evaluator is the closest thing in the project to a direct, automatable proxy for that requirement.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>The GDPR "right to explanation" and similar regulatory language ask, in effect, "can you explain this decision to the person it affected" — this evaluator is the closest thing in the project to a direct, automatable proxy for that requirement.</p></div>
     </article>
 
     <article class="component" id="robustness">
@@ -355,7 +355,7 @@ footer a{color:var(--ink-dim)}
       <div class="subhead">Why this design</div>
       <p>This is intentionally the <em>weakest, cheapest</em> of the three safety evaluators — a baseline, not a claim of real adversarial resistance. It exists because ordinary deployment noise (sensor jitter, rounding, slightly stale features) is random, not adversarially crafted, and a model that can't survive that baseline case is a more urgent problem than one that merely fails against a dedicated attacker.</p>
       <div class="why-box"><span class="lbl">Why it works</span><p>Precisely because it's cheap and dependency-free, it runs on every model in every sweep without a runtime cost — the two more expensive Phase 3 evaluators (adversarial search, drift) exist specifically to go further where this one stops.</p></div>
-      <div class="app-box"><span class="lbl">Application angle</span><p>"Does this model survive normal production noise" is the first, cheapest safety gate in a deployment pipeline — before anyone reaches for a real adversarial-attack tool.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>"Does this model survive normal production noise" is the first, cheapest safety gate in a deployment pipeline — before anyone reaches for a real adversarial-attack tool.</p></div>
     </article>
 
     <article class="component" id="privacy">
@@ -370,7 +370,7 @@ footer a{color:var(--ink-dim)}
       <div class="subhead">Why this design</div>
       <p>The project's original roadmap specified TensorFlow Privacy for this. That package's latest release (0.8.11, unmaintained since ~2023) hard-pins <code>pandas~=1.4</code>, which has no Python 3.12 wheel and fails to build from source — confirmed by hand. Rather than ship a weaker proxy quietly relabeled as "membership inference," the actual published attack algorithm TensorFlow Privacy itself wraps was implemented directly against scikit-learn. This is a faithful reimplementation of a real, peer-reviewed technique, not an approximation of one.</p>
       <div class="why-box"><span class="lbl">Why it works</span><p>Cross-validating the attack classifier out-of-fold is what makes the reported accuracy trustworthy — a naive "train and score on the same rows" attacker would systematically overstate how much an adversary could actually learn.</p></div>
-      <div class="app-box"><span class="lbl">Application angle</span><p>Directly answers a GDPR/CCPA-style question: "could someone determine whether a specific person's data was used to train this model, just by querying it?" A measured 0.0 advantage is a defensible, testable answer — not an assumption.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>Directly answers a GDPR/CCPA-style question: "could someone determine whether a specific person's data was used to train this model, just by querying it?" A measured 0.0 advantage is a defensible, testable answer — not an assumption.</p></div>
     </article>
 
     <article class="component" id="giskard">
@@ -382,7 +382,7 @@ footer a{color:var(--ink-dim)}
       <div class="subhead">Why this design</div>
       <p>Giskard was chosen as a long-term backbone specifically because it's <em>unified</em> — one dependency that already extends to LLM scanning too, unlike single-purpose tools. Its data-leakage detector was deliberately left unwired at first (documented in-code) since Phase 1's privacy story was still an explicit proxy pending Phase 3's real attack — now that a real membership-inference attack exists, whether Giskard's leakage scan adds independent signal is an open question worth revisiting.</p>
       <div class="why-box"><span class="lbl">Why it works</span><p>Because it auto-discovers problem subgroups rather than requiring a human to name a sensitive attribute up front, it catches disparities the declared-attribute fairness check structurally cannot see.</p></div>
-      <div class="app-box"><span class="lbl">Application angle</span><p>Good answer to "what if there's bias against a group we didn't think to check for" — loss-guided slicing finds underperforming subgroups without being told where to look.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>Useful when bias may exist against a group nobody thought to declare as sensitive: loss-guided slicing finds underperforming subgroups without being told where to look.</p></div>
     </article>
 
     <article class="component" id="art">
@@ -395,7 +395,7 @@ footer a{color:var(--ink-dim)}
       <div class="subhead">Why this design</div>
       <p>Complements, rather than replaces, the Gaussian-noise robustness check: random noise tests the <em>average</em> case, an adversarial search tests the <em>worst</em> case an attacker would actually find. A model can be extremely stable under random jitter and still be trivially foolable by a deliberately-crafted, tiny perturbation — these are genuinely different failure modes.</p>
       <div class="why-box"><span class="lbl">Why it works</span><p>On low-dimensional data, HopSkipJump can flip <em>every</em> model within budget, making the raw success-rate metric uninformative there — but the companion metric, the median perturbation size needed, still separates models clearly (0.235 vs 0.764 in one measured run), because "how big a change was required" carries information even when "was it eventually possible" doesn't.</p></div>
-      <div class="app-box"><span class="lbl">Application angle</span><p>The direct fit is any model exposed as a queryable API — content moderation, fraud detection, spam filtering — where an adversary can iteratively probe predictions and search for an evasive input.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>The direct fit is any model exposed as a queryable API — content moderation, fraud detection, spam filtering — where an adversary can iteratively probe predictions and search for an evasive input.</p></div>
     </article>
 
     <article class="component" id="drift">
@@ -408,7 +408,7 @@ footer a{color:var(--ink-dim)}
       <div class="subhead">Why this design</div>
       <p>Two independent questions get answered here, deliberately kept separate: does the statistical monitoring tool itself actually work on this data (a real deployment-observability question), and does the model degrade gracefully or collapse once that drift is present (a model-quality question). Conflating them into one number would hide which of the two is actually the problem.</p>
       <div class="why-box"><span class="lbl">Why it works</span><p>Bonferroni correction across features means the detector's false-positive rate stays controlled even as feature count grows — without it, testing dozens of features independently at p=0.05 each would flag "drift" on unshifted data fairly often just by chance.</p></div>
-      <div class="app-box"><span class="lbl">Application angle</span><p>This is the MLOps pitch: any model in production needs to know when its input distribution has moved away from what it was trained on — this evaluator proves the monitoring actually catches that before it's deployed, not after.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>MLOps monitoring: a model in production needs to know when its input distribution has moved away from what it was trained on. This evaluator checks that a drift monitor catches such a shift before deployment, not after.</p></div>
     </article>
 
     <!-- ============================================================ -->
@@ -426,7 +426,7 @@ footer a{color:var(--ink-dim)}
       <div class="subhead">How it works</div>
       <p>A static registry of stock scikit-learn estimators grouped by family — <code>linear</code>, <code>tree_based</code>, <code>instance_based</code>, <code>probabilistic</code>, <code>kernel</code> for classification, plus a mirrored <code>REGRESSORS</code> registry (Phase 2) so the fairness evaluator's regression branch is actually exercised rather than dead code.</p>
       <div class="why-box"><span class="lbl">Why it works</span><p>Grouping by family, not just by name, is what makes family-level comparison a meaningful question at all — the meta-benchmark and comparison table both key off <code>family_of()</code> to answer it.</p></div>
-      <div class="app-box"><span class="lbl">Application angle</span><p>"Which family of model tends to be more ethical, in general" is a genuinely different — and often more actionable — question for a team than "which single model won this one run."</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>"Which family of model tends to be more ethical, in general" is a genuinely different — and often more actionable — question for a team than "which single model won this one run."</p></div>
     </article>
 
     <article class="component" id="runner">
@@ -445,7 +445,7 @@ footer a{color:var(--ink-dim)}
       <div class="subhead">Why this design</div>
       <p>A real bug surfaced during testing here: some metrics (like Giskard's <code>giskard_issue_score</code>) are reported under more than one principle in the same run. A naive groupby on metric name alone silently averaged the fairness-bucket and safety-bucket numbers together, halving the effective sample count without any error. <code>score_distribution()</code> now takes an explicit <code>principle</code> parameter and raises a <code>ValueError</code> if it's needed but omitted, rather than silently producing a quietly-wrong distribution.</p>
       <div class="why-box"><span class="lbl">Why it works</span><p>This is exactly the kind of bug that a single test run would never catch (the wrong number still looks plausible) — it only surfaced because a second, differently-shaped test (regression fairness) forced a direct comparison against the expected row count.</p></div>
-      <div class="app-box"><span class="lbl">Application angle</span><p>"We ran this once and model A won" is an anecdote; "model A won across 15 independent folds, and here's the p-value" is evidence — this is the machinery that turns one into the other.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>"We ran this once and model A won" is an anecdote; "model A won across 15 independent folds, and here's the p-value" is evidence — this is the machinery that turns one into the other.</p></div>
     </article>
 
     <article class="component" id="meta">
@@ -454,7 +454,7 @@ footer a{color:var(--ink-dim)}
       <div class="subhead">How it works</div>
       <p>Runs the full sweep once per dataset across a default suite of 10 PMLB datasets (chosen over OpenML-CC18: no API key required, reliable GitHub-hosted CSVs). <code>aggregate_across_datasets()</code> normalizes scores <em>within</em> each dataset first — so datasets with wildly different scales never distort the average — then means per model per principle across every dataset that model actually ran on.</p>
       <div class="why-box"><span class="lbl">Why it works</span><p>Normalizing per-dataset before averaging across datasets is the step that makes the cross-dataset average meaningful at all — without it, a dataset where every model scores near 1.0 could silently dominate the aggregate over one where scores are more spread out.</p></div>
-      <div class="app-box"><span class="lbl">Application angle</span><p>Answers "does this finding generalize, or did we get lucky with Adult specifically" — the same question a reviewer would ask about any single-dataset ML paper.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>Answers "does this finding generalize, or did we get lucky with Adult specifically" — the same question a reviewer would ask about any single-dataset ML paper.</p></div>
     </article>
 
     <article class="component" id="significance">
@@ -466,7 +466,7 @@ footer a{color:var(--ink-dim)}
       <div class="subhead">Why this design</div>
       <p>Nemenyi is deliberately gated behind Friedman rejecting the null first — running pairwise comparisons on a ranking that was never shown to differ from chance in the first place would manufacture the appearance of precision the data doesn't support. The <code>enough_data</code> flag exists so a p-value is never presented with more authority than the sample size backing it actually earns.</p>
       <div class="why-box"><span class="lbl">Why it works</span><p>This is the standard methodology from Demšar's 2006 "Statistical Comparisons of Classifiers over Multiple Data Sets" — reusing an established statistical procedure instead of inventing a bespoke significance heuristic is what makes the resulting claims defensible to anyone with a stats background.</p></div>
-      <div class="app-box"><span class="lbl">Application angle</span><p>The single strongest answer, if a mentor asks "how do you know this isn't just noise": a measured Friedman result of <code>p = 1.65e-11</code> on accuracy across 15 CV folds — not eyeballing two means.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>Evidence that a ranking is not noise: in one measured run, a Friedman test on accuracy across 15 CV folds gave <code>p = 1.65e-11</code>, instead of relying on a comparison of two means.</p></div>
     </article>
 
     <!-- ============================================================ -->
@@ -486,7 +486,7 @@ footer a{color:var(--ink-dim)}
       <div class="subhead">Why this design</div>
       <p>Every one of these four functions is a small, separately-testable step rather than one opaque "score this model" call — <code>normalize()</code> doesn't know about principles, <code>principle_profile()</code> doesn't know about trade-offs, <code>pareto_front()</code> doesn't know about weights. The Pareto front specifically exists because it requires <em>no</em> human-supplied weighting at all — it answers "which models are not strictly beaten by another" using only the raw trade-off structure.</p>
       <div class="why-box"><span class="lbl">Why it works</span><p>Because <code>weighted_score()</code> is the only function in this module that requires a human input, and every other function works without one, the pipeline can always produce something useful (a profile, a Pareto front) even when nobody has yet decided what matters most.</p></div>
-      <div class="app-box"><span class="lbl">Application angle</span><p>"There is no single most-ethical model" stops being a caveat and becomes a demonstrable fact once you can show a Pareto front with more than one model on it — genuinely undominated trade-offs, not a hedge.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>"There is no single most-ethical model" becomes a demonstrable fact whenever the Pareto front contains more than one model: genuinely undominated trade-offs, not a hedge.</p></div>
     </article>
 
     <article class="component" id="modelcard">
@@ -497,7 +497,7 @@ footer a{color:var(--ink-dim)}
       <div class="subhead">Why this design</div>
       <p><code>model-card-toolkit</code>, the real Google library, doesn't build on Python 3.12 (an <code>absl-py</code> pin failure) — so this is a from-scratch renderer that mirrors the published schema exactly, with a best-effort sidecar JSON export to the real library's own <code>ModelCard</code> dataclass whenever it happens to be importable, wrapped so any field mismatch never blocks the actual HTML deliverable.</p>
       <div class="why-box"><span class="lbl">Why it works</span><p>Governance principles are listed explicitly as <em>not represented</em> on every card, rather than just omitted — a reader can't mistake "no score shown" for "this was checked and found fine."</p></div>
-      <div class="app-box"><span class="lbl">Application angle</span><p>This is the audit-trail artifact: a document a compliance reviewer, a client, or a regulator could actually be handed, that traces every number back to a specific computation.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>This is the audit-trail artifact: a document a compliance reviewer, a client, or a regulator could actually be handed, that traces every number back to a specific computation.</p></div>
     </article>
 
     <article class="component" id="report">
@@ -505,7 +505,7 @@ footer a{color:var(--ink-dim)}
       <span class="file">ethikit/report/report.py</span>
       <div class="subhead">How it works</div>
       <p>A single self-contained HTML file: the per-principle profile table, the Pareto-optimal model list, and a full principle × tool × mechanism coverage table — everything needed to understand one benchmark run without opening a terminal.</p>
-      <div class="app-box"><span class="lbl">Application angle</span><p>The one artifact to leave open in a browser tab as your live-demo fallback — no server, no dependencies, just a file.</p></div>
+      <div class="app-box"><span class="lbl">Where it applies</span><p>A single self-contained file for sharing a run's results: it opens in any browser, with no server and no dependencies.</p></div>
     </article>
 
     <article class="component" id="streamlit">
@@ -521,13 +521,13 @@ footer a{color:var(--ink-dim)}
     <!-- ============================================================ -->
     <div class="part-divider" id="applications">
       <span class="eyebrow">Part V</span>
-      <h2>Presenting it, by audience</h2>
-      <p>The same eight evaluators, reframed for whoever's in the room. Use whichever row matches your actual audience.</p>
+      <h2>Who it is for</h2>
+      <p>The same components, mapped to the people who use them and what each group needs from an evaluation.</p>
     </div>
 
     <div class="tblwrap">
       <table>
-        <tr><th>Audience</th><th>What they care about</th><th>Lead with</th></tr>
+        <tr><th>Who</th><th>What they need</th><th>Most relevant components</th></tr>
         <tr><td>ML / MLOps engineers</td><td>Can this gate a CI/CD pipeline before deployment?</td><td>The registry pattern (§ Architecture) + robustness/drift evaluators as an automated pre-deploy check, same shape as a unit test</td></tr>
         <tr><td>Compliance / legal</td><td>Is there a defensible audit trail?</td><td>Model Cards + the mandatory <code>mechanism</code> field — every number traces to a computation, not a black box</td></tr>
         <tr><td>Data scientists</td><td>Which model should I actually ship?</td><td>The Pareto front + weighted scoring — trade-offs made visible, not collapsed into one score</td></tr>
@@ -652,7 +652,7 @@ footer a{color:var(--ink-dim)}
     </div>
 
     <footer>
-      <a href="index.html">All docs</a> &middot; companion to <a href="proposal.html">the project proposal</a> and <a href="field-guide.html">the demo field guide</a> — part of the ethikit docs set. Source of truth is always the code; this document explains it, not replaces it.
+      <a href="index.html">All docs</a> &middot; companion to <a href="proposal.html">the project proposal</a> — part of the ethikit docs set. Source of truth is always the code; this document explains it, not replaces it.
     </footer>
   </div>
 </div>

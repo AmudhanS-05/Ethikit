@@ -78,7 +78,7 @@ pip install -r requirements.txt                            # everything, incl. o
 python -m ethikit serve --open       # http://127.0.0.1:8765  (--port 9000 to change)
 ```
 
-The console is at `/`; the project docs (proposal, internals, field guide, sample report) are
+The console is at `/`; the project docs (proposal, internals, sample report, console replay) are
 served by the same command at `/docs/`, so the whole thing works offline.
 
 **3. Or use the terminal**
@@ -257,7 +257,6 @@ All local. With the console running, open **http://127.0.0.1:8765/docs/**; or op
 |---|---|
 | [Proposal](docs/proposal.html) | The pitch: the problem, the four-body principle taxonomy, and where the project is headed. |
 | [Ethikit Internals](docs/understanding.html) | The technical companion: every component's mechanism and design rationale. |
-| [Field Guide](docs/field-guide.html) | A timed live-demo script plus a component reference, for presenting ethikit. |
 | [Sample Report](docs/report.html) | A real aggregate report from `run_demo.py`. |
 | [Console replay](docs/console/index.html) | A static replay of a recorded run, for when you can't run Python. The live console is `python -m ethikit serve`. |
 | [ROADMAP.md](ROADMAP.md) | Milestones M1-M7, what each delivered, and what is still open. |

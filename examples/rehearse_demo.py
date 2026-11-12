@@ -1,12 +1,13 @@
-"""Rehearse the field guide's demo script: run every step that has a terminal equivalent and
+"""Rehearse the demo script: run every step that has a terminal equivalent and
 time it against its budget, so nothing surprises you in the room.
 
     python -m examples.rehearse_demo            # all steps
     python -m examples.rehearse_demo --quick    # skip the slow optional ones
 
 A step's budget is the machine time it may take *while you are talking over it*: the spoken
-cue is longer (see docs/field-guide.html). Everything runs in a temporary folder with its own
-run history, so nothing in your working directory changes. Exit code 1 if any step fails or
+cue is longer (the script is kept locally in presenter/field-guide.html, which is not
+published). Everything runs in a temporary folder with its own run history, so nothing in
+your working directory changes. Exit code 1 if any step fails or
 runs over budget.
 """
 from __future__ import annotations

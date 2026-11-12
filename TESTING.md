@@ -304,6 +304,6 @@ and PyTorch installed; every step is well inside its budget.
 | M7.4 | Still keyboard only: Tab to the results tabs, then use ← → Home End | the selected tab moves and its panel shows; Tab from a tab goes into the panel, not to the next tab |
 | M7.5 | Turn on "reduce motion" (macOS: Accessibility > Display; Windows: Settings > Accessibility > Visual effects > Animation effects off) and run | the flow graph does not animate (no moving dots, no pulsing) but nodes and results still fill in |
 | M7.6 | Zoom the browser to 200% | everything still readable, no text cut off, the page scrolls vertically only |
-| M7.7 | Open docs/field-guide.html, then run the **demo script** start to finish with a timer | each cue matches what is on screen; about 10 minutes (8.8 without cue 06) |
+| M7.7 | Open presenter/field-guide.html (local only, not published), then run the **demo script** start to finish with a timer | each cue matches what is on screen; about 10 minutes (8.8 without cue 06) |
 | M7.8 | In a fresh venv: `pip install .` then, from another folder, `ethikit serve --open` | the console works; `/docs/` says the docs ship with the source checkout (they are not in the pip package) |
 | M7.9 | `make demo` (macOS / Linux) | the same as `python -m ethikit serve --open` |
