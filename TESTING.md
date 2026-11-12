@@ -94,6 +94,7 @@ python -m pytest -m e2e           # 17 browser tests
 - `tests/e2e/test_console.py` -- suite mode hides the my-data rows and rewrites the command; a gap domain disables run and tells you to bring your own data; a suite run shows family evidence, real units, caveats, a skipped dataset greyed out, and the shortlist hands back to my-data mode; `--cv` shows up in the command and the table shows a spread.
 
 **Verified against real data in the build sandbox**: COMPAS (downloaded from GitHub; cleaned to 6,172 rows, the count in ProPublica's published analysis; accuracy about 0.65-0.69, in line with the literature).
+**Verified on a Windows machine with network (2026-11-12)**: HMDA Delaware 2023 (11,570 rows), MEPS panel 19 (15,830 rows, the count AIF360's MEPSDataset19 gives), UCI Heart Disease (303), UCI Student Performance (649), OULAD (22,437), loaded from the real sources and run through `ethikit domains run`. `tests/test_domain_sources.py` checks their adapters offline, and its `network` tests re-fetch the small files (they skip when offline).
 **Not verifiable there (no access to census.gov, OpenML, UCI)**: ACS download, Adult, German Credit, credit-card default, bank marketing, diabetes hospital. They are tested offline on shaped fixtures; **please run the live checks below once on your machine**.
 
 **Live checks -- please run these (need internet once; data is cached afterwards)**
@@ -102,12 +103,13 @@ python -m pytest -m e2e           # 17 browser tests
 |---|---|---|
 | L1 | `pip install folktables && python -m ethikit domains run census --max-datasets 1` | downloads one state's ACS file, then a family table; if it fails, the error names the dataset and the fix |
 | L2 | `python -m ethikit domains run census --max-datasets 5` | five tasks for the first state all load (`✓ N rows`); positive rates look plausible (income ~ 0.3-0.5, employment ~ 0.4-0.6) |
-| L3 | `python -m ethikit domains run lending` | three datasets; **any loader whose columns differ from what we assumed fails with the real column list** -- paste me that message and I fix the one line |
-| L4 | `python -m ethikit domains run health` | the diabetes dataset loads; family table with a fairness column |
+| L3 | `python -m ethikit domains run lending` | four datasets (HMDA Delaware is a ~6 MB download); **any loader whose columns differ from what we assumed fails with the real column list** -- paste me that message and I fix the one line |
+| L4 | `python -m ethikit domains run health` | three datasets load (MEPS is a 13 MB download and takes ~1 min to parse; MEPS gives 15,830 rows, Heart Disease 303); family table with a fairness column |
 | L5 | `python -m ethikit domains run justice` | already verified here: `✓ 5000 rows`, accuracy ~0.65-0.69 |
 | L6 | `python -m ethikit domains run census --cv 3x2 --max-datasets 3` | slower; every number carries a +/- |
 | L7 | run L1 again | instant (served from `~/.cache/ethikit`) |
 | L8 | `python -m ethikit domains run hiring` | exits with a one-line message telling you to bring your own data |
+| L9 | `python -m ethikit domains run education` | two datasets (OULAD is a 47 MB download; only its 3.5 MB student table is cached): Student Performance 649 rows, OULAD 22,437 rows |
 
 **Manual / visual (console)**
 1. Open the console, choose `--mode reference suite`; **see** the `--data`, `--estimator`, `--model-file` rows disappear and a **domain** row, a **datasets** list (each marked *verified* or *first run on your machine*) and a yellow **caveats** box appear. The command line at the bottom now starts `ethikit domains run census`.

@@ -203,7 +203,7 @@ several public datasets from one domain and reports which *kinds* of model tend 
 It is a prior, never a verdict: re-test the shortlist on your own data as soon as you have it.
 
 ```bash
-python -m ethikit domains list                       # census, lending, health, justice, hiring (gap)
+python -m ethikit domains list                       # census, lending, health, education, justice, hiring (gap)
 python -m ethikit domains info lending               # datasets, sources, sensitive attributes, caveats
 python -m ethikit domains run census --max-datasets 3
 python -m ethikit domains run justice --cv 3x2       # repeated CV: every number gets a spread
@@ -213,7 +213,21 @@ or in the console: `--mode reference suite`. You get family-level tables (relati
 real units such as accuracy and parity gap), whether the leading family also leads on each dataset,
 a Friedman test when there is enough data, and a starting shortlist ("use this shortlist on my
 data"). Suites say how thin they are: `gap` (hiring: bring your own data), `single`, `small`, `suite`.
-Datasets download once and are cached in `~/.cache/ethikit`. The census suite needs
+
+| Domain | Size | Datasets |
+|---|---|---|
+| census | suite (16) | folktables ACS income / employment / public coverage / mobility / travel time × CA, TX, NY; UCI Adult |
+| lending | small (4) | German Credit; Taiwan credit-card default; bank marketing; HMDA mortgages (Delaware 2023, race) |
+| health | small (3) | diabetes readmission; MEPS 2015 panel 19 utilisation (race; AHRQ data use agreement applies); UCI Heart Disease (sex) |
+| education | small (2) | UCI Student Performance (sex); Open University OULAD (gender) |
+| justice | single (1) | COMPAS (race) |
+| hiring | gap | none found; bring your own data |
+
+Sources, sensitive attributes, cleaning choices and the datasets considered but rejected (NIJ
+recidivism: official host gone, copies behind logins; LSAC bar passage: no licence) are listed
+in [GUIDE.md section 7](GUIDE.md#7-reference-suites-no-data-of-your-own) and by
+`python -m ethikit domains info <id>`.
+Datasets download once and are cached in `~/.cache/ethikit` (or `$ETHIKIT_CACHE`). The census suite needs
 `pip install folktables`. See [TESTING.md](TESTING.md) (live checks L1-L8) for which loaders have
 been verified against real data.
 
